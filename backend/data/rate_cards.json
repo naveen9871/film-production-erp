@@ -1,0 +1,44 @@
+{
+  "currency": "INR",
+  "unit": "Lakhs",
+  "multiplier": 100000,
+  "rates": {
+    "departments": {
+      "Cast": {
+        "Small": {"Lead": 15, "Supporting": 2, "Background": 0.05},
+        "Medium": {"Lead": 150, "Supporting": 15, "Background": 0.05},
+        "Large": {"Lead": 1000, "Supporting": 50, "Background": 0.05}
+      },
+      "Locations": {
+        "Small": {"DayRate": 0.5, "Permit": 0.2, "Recce": 0.1},
+        "Medium": {"DayRate": 2.0, "Permit": 0.5, "Recce": 0.2},
+        "Large": {"DayRate": 5.0, "Permit": 1.0, "Recce": 0.5}
+      },
+      "Equipment": {
+        "Small": {"Camera": 0.5, "Lighting": 0.3, "Sound": 0.1},
+        "Medium": {"Camera": 2.0, "Lighting": 1.0, "Sound": 0.5},
+        "Large": {"Camera": 5.0, "Lighting": 2.5, "Sound": 1.0}
+      }
+    }
+  },
+  "allocations": {
+    "Bollywood": {
+      "PreProduction": 10,
+      "Production": 40,
+      "PostProduction": 20,
+      "Marketing": 30
+    },
+    "Regional": {
+      "PreProduction": 5,
+      "Production": 55,
+      "PostProduction": 25,
+      "Marketing": 15
+    },
+    "Independent": {
+      "PreProduction": 15,
+      "Production": 60,
+      "PostProduction": 15,
+      "Marketing": 10
+    }
+  }
+}

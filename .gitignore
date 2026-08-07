@@ -1,0 +1,16 @@
+# Node
+node_modules/
+dist/
+.env
+
+# Python
+venv/
+__pycache__/
+*.pyc
+
+# Go
+backend/film-production-erp
+backend/erp.db
+
+# OS
+.DS_Store
