@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 import os
 
 from agents.script_analyzer import analyze_script_text
@@ -14,7 +14,7 @@ class ScriptUpload(BaseModel):
 class AssistantQuery(BaseModel):
     session_id: str
     query: str
-    budget_context: dict
+    budget_context: Dict[str, Any]
 
 @app.post("/analyze-script")
 async def analyze_script(upload: ScriptUpload):

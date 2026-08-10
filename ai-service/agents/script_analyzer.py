@@ -1,7 +1,10 @@
 from langchain_core.prompts import ChatPromptTemplate
 from pydantic import BaseModel, Field
 from typing import List
+import logging
 import os
+
+logger = logging.getLogger(__name__)
 
 # Note: We will use a mock or environment variable for the LLM based on user preference later.
 # For now, we set up the structure of the agent using LangChain's structured output.
@@ -39,10 +42,13 @@ def analyze_script_text(text: str) -> dict:
     """
 
     # Mock return for now
-    return {
+    logger.debug(f"Analyzing script text of length: {len(text)}")
+    result = {
         "elements": [
             {"element_type": "Character", "name": "JOHN DOE", "mentions": 15, "estimated_days": 3.0},
             {"element_type": "Location", "name": "INT. COFFEE SHOP", "mentions": 2, "estimated_days": 1.0},
             {"element_type": "Prop", "name": "VINTAGE WATCH", "mentions": 1, "estimated_days": 1.0}
         ]
     }
+    logger.debug(f"Script analysis complete. Extracted {len(result['elements'])} elements.")
+    return result
