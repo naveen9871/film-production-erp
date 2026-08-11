@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import api from '../api';
+import { fetchRevenue, logRevenue, fetchDashboard } from '../api';
 
 const Revenue = ({ productionId }) => {
   const [rights, setRights] = useState([]);
-  const [profitability, setProfitability] = useState(null);
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ category: '', expectedRevenue: '', actualRevenue: '', buyer: '' });
 
   useEffect(() => {
@@ -11,23 +12,24 @@ const Revenue = ({ productionId }) => {
   }, [productionId]);
 
   const fetchData = async () => {
+    setLoading(true);
     try {
-      const [rightsRes, profitRes] = await Promise.all([
-        api.get(`/productions/${productionId}/rights`),
-        api.get(`/productions/${productionId}/profitability`)
+      const [rightsRes, dashRes] = await Promise.all([
+        fetchRevenue(productionId),
+        fetchDashboard(productionId)
       ]);
       setRights(rightsRes.data || []);
-      setProfitability(profitRes.data);
+      setStats(dashRes.data);
     } catch (err) {
       console.error(err);
     }
+    setLoading(false);
   };
 
   const handleAddRights = async (e) => {
     e.preventDefault();
     try {
-      await api.post(`/productions/${productionId}/rights`, {
-        productionId: Number(productionId),
+      await logRevenue(productionId, {
         category: form.category,
         expectedRevenue: Number(form.expectedRevenue),
         actualRevenue: Number(form.actualRevenue),
@@ -35,102 +37,150 @@ const Revenue = ({ productionId }) => {
         status: 'Signed'
       });
       setForm({ category: '', expectedRevenue: '', actualRevenue: '', buyer: '' });
-      fetchData();
+      await fetchData();
     } catch (err) {
       console.error(err);
     }
   };
 
-  return (
-    <div className="animate-fade-in glass-card">
-      <h1>Revenue & Rights Management</h1>
+  const formatINR = (amt) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amt || 0);
 
-      {profitability && (
-        <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem', marginBottom: '2rem' }}>
-          <div style={{ flex: 1, padding: '1.5rem', background: '#f8f9fa', borderRadius: '8px' }}>
-            <h3>Total Actual Cost</h3>
-            <h2>₹{profitability.TotalCost.toFixed(2)}</h2>
+  const profitLoss = stats ? stats.totalExpectedRevenue - stats.totalActualCost : 0;
+  const roi = stats && stats.totalActualCost > 0 ? (profitLoss / stats.totalActualCost) * 100 : 0;
+
+  return (
+    <div className="screen active" id="revenue">
+      <div className="page-head">
+        <div>
+          <div className="page-title">Revenue & Rights</div>
+          <div className="page-sub">Manage IP rights, distribution deals, and revenue forecasting</div>
+        </div>
+      </div>
+
+      {stats && (
+        <div className="kpi-row" style={{ marginBottom: '24px' }}>
+          <div className="kpi">
+            <div className="kpi-label">Total Actual Cost</div>
+            <div className="kpi-value">{formatINR(stats.totalActualCost)}</div>
           </div>
-          <div style={{ flex: 1, padding: '1.5rem', background: '#f8f9fa', borderRadius: '8px' }}>
-            <h3>Total Expected Revenue</h3>
-            <h2>₹{profitability.TotalExpectedRevenue.toFixed(2)}</h2>
+          <div className="kpi">
+            <div className="kpi-label">Total Expected Revenue</div>
+            <div className="kpi-value">{formatINR(stats.totalExpectedRevenue)}</div>
           </div>
-          <div style={{ flex: 1, padding: '1.5rem', background: profitability.IsProfitable ? '#e6f4ea' : '#fce8e6', borderRadius: '8px' }}>
-            <h3>Projected Profit / Loss</h3>
-            <h2 style={{ color: profitability.IsProfitable ? 'green' : 'red' }}>
-              ₹{profitability.ExpectedProfitLoss.toFixed(2)}
-            </h2>
-            <p>ROI: {profitability.ExpectedROI.toFixed(2)}%</p>
+          <div className="kpi">
+            <div className="kpi-label">Projected Profit / Loss</div>
+            <div className={`kpi-value ${profitLoss >= 0 ? 'good' : 'alert'}`}>
+              {formatINR(profitLoss)}
+            </div>
+            <div className={`kpi-delta ${profitLoss >= 0 ? 'up-good' : 'up-bad'}`} style={{ marginTop: '8px', display: 'inline-block' }}>
+              ROI: {roi.toFixed(1)}%
+            </div>
           </div>
         </div>
       )}
 
-      <div style={{ padding: '1.5rem', background: '#f8f9fa', borderRadius: '8px' }}>
-        <h3>Add Rights Record</h3>
-        <form onSubmit={handleAddRights} style={{ display: 'flex', gap: '1rem', marginTop: '1rem', flexWrap: 'wrap' }}>
-          <select 
-            value={form.category} 
-            onChange={e => setForm({...form, category: e.target.value})}
-            required
-            style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid #ccc' }}
-          >
-            <option value="">Select Category</option>
-            <option value="Satellite">Satellite</option>
-            <option value="Audio">Audio</option>
-            <option value="Theatrical">Theatrical</option>
-            <option value="OTT">OTT</option>
-            <option value="Overseas">Overseas</option>
-          </select>
-          <input 
-            type="number" 
-            placeholder="Expected (₹)" 
-            value={form.expectedRevenue}
-            onChange={e => setForm({...form, expectedRevenue: e.target.value})}
-            required
-            style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid #ccc' }}
-          />
-          <input 
-            type="number" 
-            placeholder="Actual (₹)" 
-            value={form.actualRevenue}
-            onChange={e => setForm({...form, actualRevenue: e.target.value})}
-            style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid #ccc' }}
-          />
-          <input 
-            type="text" 
-            placeholder="Buyer" 
-            value={form.buyer}
-            onChange={e => setForm({...form, buyer: e.target.value})}
-            style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid #ccc', flex: 1 }}
-          />
-          <button type="submit" style={{ padding: '0.5rem 1rem', background: 'var(--color-accent)', color: 'white', border: 'none', borderRadius: '4px' }}>
-            Add
-          </button>
-        </form>
-      </div>
+      <div className="grid-2">
+        <div className="panel" style={{ gridColumn: 'span 1' }}>
+          <div className="panel-head">
+            <h3>Log New Deal</h3>
+          </div>
+          <div className="panel-body">
+            <form onSubmit={handleAddRights} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div className="form-row">
+                <label>Category</label>
+                <select 
+                  className="input"
+                  value={form.category} 
+                  onChange={e => setForm({...form, category: e.target.value})}
+                  required
+                >
+                  <option value="">Select Category...</option>
+                  <option value="Satellite">Satellite</option>
+                  <option value="Audio">Audio</option>
+                  <option value="Theatrical">Theatrical</option>
+                  <option value="OTT">OTT</option>
+                  <option value="Overseas">Overseas</option>
+                </select>
+              </div>
+              <div className="form-row">
+                <label>Buyer / Partner</label>
+                <input 
+                  type="text" 
+                  className="input"
+                  placeholder="e.g. Netflix, T-Series" 
+                  value={form.buyer}
+                  onChange={e => setForm({...form, buyer: e.target.value})}
+                />
+              </div>
+              <div className="grid-2" style={{ gap: '16px' }}>
+                <div className="form-row">
+                  <label>Expected (₹)</label>
+                  <input 
+                    type="number" 
+                    className="input"
+                    placeholder="0" 
+                    value={form.expectedRevenue}
+                    onChange={e => setForm({...form, expectedRevenue: e.target.value})}
+                    required
+                  />
+                </div>
+                <div className="form-row">
+                  <label>Actual (₹)</label>
+                  <input 
+                    type="number" 
+                    className="input"
+                    placeholder="0" 
+                    value={form.actualRevenue}
+                    onChange={e => setForm({...form, actualRevenue: e.target.value})}
+                  />
+                </div>
+              </div>
+              
+              <button type="submit" className="btn primary" style={{ width: '100%', justifyContent: 'center', marginTop: '8px' }}>
+                Save Record
+              </button>
+            </form>
+          </div>
+        </div>
 
-      {rights.length > 0 && (
-        <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '2rem' }}>
-          <thead>
-            <tr style={{ background: '#f0f0f0', textAlign: 'left' }}>
-              <th style={{ padding: '0.75rem' }}>Category</th>
-              <th style={{ padding: '0.75rem' }}>Buyer</th>
-              <th style={{ padding: '0.75rem', textAlign: 'right' }}>Expected (₹)</th>
-              <th style={{ padding: '0.75rem', textAlign: 'right' }}>Actual (₹)</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rights.map(r => (
-              <tr key={r.id} style={{ borderBottom: '1px solid #eee' }}>
-                <td style={{ padding: '0.75rem' }}>{r.category}</td>
-                <td style={{ padding: '0.75rem' }}>{r.buyer}</td>
-                <td style={{ padding: '0.75rem', textAlign: 'right' }}>{r.expectedRevenue.toFixed(2)}</td>
-                <td style={{ padding: '0.75rem', textAlign: 'right' }}>{r.actualRevenue.toFixed(2)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+        <div className="panel" style={{ gridColumn: 'span 2' }}>
+          <div className="panel-head">
+            <h3>Rights Ledger</h3>
+            <span className="hint">{rights.length} records</span>
+          </div>
+          <div className="panel-body">
+            {loading ? <p>Loading...</p> : (
+              <table>
+                <thead>
+                  <tr>
+                    <th>Category</th>
+                    <th>Buyer</th>
+                    <th>Status</th>
+                    <th className="num">Expected (₹)</th>
+                    <th className="num">Actual (₹)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rights.map(r => (
+                    <tr key={r.id}>
+                      <td style={{ fontWeight: '500' }}>{r.category}</td>
+                      <td>{r.buyer || '-'}</td>
+                      <td><span className="badge signed">{r.status || 'Signed'}</span></td>
+                      <td className="num">{formatINR(r.expectedRevenue)}</td>
+                      <td className="num" style={{ fontWeight: '600' }}>{formatINR(r.actualRevenue)}</td>
+                    </tr>
+                  ))}
+                  {rights.length === 0 && (
+                    <tr>
+                      <td colSpan="5" className="text-dim text-center">No revenue records logged yet.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

@@ -1,120 +1,204 @@
 import React, { useState, useEffect } from 'react';
-import api from '../api';
+import { fetchExpenses, logExpense, fetchBudget } from '../api';
 
 const Expenses = ({ productionId }) => {
   const [expenses, setExpenses] = useState([]);
   const [budgetItems, setBudgetItems] = useState([]);
-  const [form, setForm] = useState({ budgetItemId: '', amount: '', vendor: '', description: '' });
+  const [loading, setLoading] = useState(false);
+  const [form, setForm] = useState({ 
+    budgetItemId: '', 
+    amount: '', 
+    taxAmount: '0',
+    vendor: '', 
+    description: '',
+    status: 'Paid'
+  });
 
   useEffect(() => {
     if (productionId) {
-      fetchData();
+      loadData();
     }
   }, [productionId]);
 
-  const fetchData = async () => {
+  const loadData = async () => {
+    setLoading(true);
     try {
       const [expRes, budRes] = await Promise.all([
-        api.get(`/productions/${productionId}/expenses`),
-        api.get(`/productions/${productionId}/budget`)
+        fetchExpenses(productionId),
+        fetchBudget(productionId)
       ]);
       setExpenses(expRes.data || []);
       setBudgetItems(budRes.data || []);
     } catch (err) {
       console.error(err);
     }
+    setLoading(false);
   };
 
   const handleAddExpense = async (e) => {
     e.preventDefault();
     try {
-      await api.post(`/productions/${productionId}/expenses`, {
-        productionId: Number(productionId),
+      await logExpense(productionId, {
         budgetItemId: Number(form.budgetItemId),
         amount: Number(form.amount),
+        taxAmount: Number(form.taxAmount),
         vendor: form.vendor,
         description: form.description,
+        status: form.status,
         date: new Date().toISOString()
       });
-      setForm({ budgetItemId: '', amount: '', vendor: '', description: '' });
-      fetchData();
+      setForm({ budgetItemId: '', amount: '', taxAmount: '0', vendor: '', description: '', status: 'Paid' });
+      await loadData();
     } catch (err) {
       console.error(err);
     }
   };
 
+  const formatINR = (amt) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amt || 0);
+
   return (
-    <div className="animate-fade-in glass-card">
-      <h1>Expenses</h1>
-      
-      <div style={{ margin: '2rem 0', padding: '1.5rem', background: '#f8f9fa', borderRadius: '8px' }}>
-        <h3>Add Expense</h3>
-        <form onSubmit={handleAddExpense} style={{ display: 'flex', gap: '1rem', marginTop: '1rem', flexWrap: 'wrap' }}>
-          <select 
-            value={form.budgetItemId} 
-            onChange={e => setForm({...form, budgetItemId: e.target.value})}
-            required
-            style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid #ccc', minWidth: '200px' }}
-          >
-            <option value="">Select Budget Item</option>
-            {budgetItems.map(item => (
-              <option key={item.id} value={item.id}>
-                {item.department} - {item.description} (Est: ₹{item.estimatedCost})
-              </option>
-            ))}
-          </select>
-          <input 
-            type="number" 
-            placeholder="Amount (₹)" 
-            value={form.amount}
-            onChange={e => setForm({...form, amount: e.target.value})}
-            required
-            style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid #ccc' }}
-          />
-          <input 
-            type="text" 
-            placeholder="Vendor" 
-            value={form.vendor}
-            onChange={e => setForm({...form, vendor: e.target.value})}
-            style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid #ccc' }}
-          />
-          <input 
-            type="text" 
-            placeholder="Description" 
-            value={form.description}
-            onChange={e => setForm({...form, description: e.target.value})}
-            style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid #ccc', flex: 1 }}
-          />
-          <button type="submit" style={{ padding: '0.5rem 1rem', background: 'var(--color-accent)', color: 'white', border: 'none', borderRadius: '4px' }}>
-            Add
-          </button>
-        </form>
+    <div className="screen active" id="expenses">
+      <div className="page-head">
+        <div>
+          <div className="page-title">Expense Ledger</div>
+          <div className="page-sub">Track actual spending against budget line items</div>
+        </div>
       </div>
 
-      {expenses.length > 0 && (
-        <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '1rem' }}>
-          <thead>
-            <tr style={{ background: '#f0f0f0', textAlign: 'left' }}>
-              <th style={{ padding: '0.75rem' }}>Date</th>
-              <th style={{ padding: '0.75rem' }}>Budget Item ID</th>
-              <th style={{ padding: '0.75rem' }}>Vendor</th>
-              <th style={{ padding: '0.75rem' }}>Description</th>
-              <th style={{ padding: '0.75rem', textAlign: 'right' }}>Amount (₹)</th>
-            </tr>
-          </thead>
-          <tbody>
-            {expenses.map(exp => (
-              <tr key={exp.id} style={{ borderBottom: '1px solid #eee' }}>
-                <td style={{ padding: '0.75rem' }}>{new Date(exp.date).toLocaleDateString()}</td>
-                <td style={{ padding: '0.75rem' }}>{exp.budgetItemId}</td>
-                <td style={{ padding: '0.75rem' }}>{exp.vendor}</td>
-                <td style={{ padding: '0.75rem' }}>{exp.description}</td>
-                <td style={{ padding: '0.75rem', textAlign: 'right' }}>{exp.amount.toFixed(2)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+      <div className="grid-2">
+        <div className="panel" style={{ gridColumn: 'span 1' }}>
+          <div className="panel-head">
+            <h3>Log New Expense</h3>
+          </div>
+          <div className="panel-body">
+            <form onSubmit={handleAddExpense} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div className="form-row">
+                <label>Budget Line Item</label>
+                <select 
+                  className="input"
+                  value={form.budgetItemId} 
+                  onChange={e => setForm({...form, budgetItemId: e.target.value})}
+                  required
+                >
+                  <option value="">Select Item...</option>
+                  {budgetItems.map(item => (
+                    <option key={item.id} value={item.id}>
+                      {item.department} / {item.category} / {item.description} (Est: {formatINR(item.estimatedCost)})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-row">
+                <label>Vendor</label>
+                <input 
+                  type="text" 
+                  className="input"
+                  placeholder="Vendor Name" 
+                  value={form.vendor}
+                  onChange={e => setForm({...form, vendor: e.target.value})}
+                  required
+                />
+              </div>
+              <div className="form-row">
+                <label>Description</label>
+                <input 
+                  type="text" 
+                  className="input"
+                  placeholder="Expense Description" 
+                  value={form.description}
+                  onChange={e => setForm({...form, description: e.target.value})}
+                  required
+                />
+              </div>
+              <div className="grid-2" style={{ gap: '16px' }}>
+                <div className="form-row">
+                  <label>Base Amount (₹)</label>
+                  <input 
+                    type="number" 
+                    className="input"
+                    placeholder="0" 
+                    value={form.amount}
+                    onChange={e => setForm({...form, amount: e.target.value})}
+                    required
+                  />
+                </div>
+                <div className="form-row">
+                  <label>Tax Amount (₹)</label>
+                  <input 
+                    type="number" 
+                    className="input"
+                    placeholder="0" 
+                    value={form.taxAmount}
+                    onChange={e => setForm({...form, taxAmount: e.target.value})}
+                  />
+                </div>
+              </div>
+              <div className="form-row">
+                <label>Status</label>
+                <select 
+                  className="input"
+                  value={form.status} 
+                  onChange={e => setForm({...form, status: e.target.value})}
+                  required
+                >
+                  <option>Paid</option>
+                  <option>Pending</option>
+                  <option>Reimbursable</option>
+                </select>
+              </div>
+              
+              <button type="submit" className="btn primary" style={{ width: '100%', justifyContent: 'center', marginTop: '8px' }}>
+                Log Expense
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <div className="panel" style={{ gridColumn: 'span 2' }}>
+          <div className="panel-head">
+            <h3>Recent Transactions</h3>
+            <span className="hint">{expenses.length} records</span>
+          </div>
+          <div className="panel-body">
+            {loading ? <p>Loading...</p> : (
+              <table>
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Vendor & Desc</th>
+                    <th>Status</th>
+                    <th className="num">Tax</th>
+                    <th className="num">Total (₹)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {expenses.map(exp => (
+                    <tr key={exp.id}>
+                      <td className="text-dim">{new Date(exp.date).toLocaleDateString()}</td>
+                      <td>
+                        <div style={{ fontWeight: '500' }}>{exp.vendor}</div>
+                        <div className="text-dim" style={{ fontSize: '12px' }}>{exp.description}</div>
+                      </td>
+                      <td>
+                        <span className={`badge ${exp.status === 'Paid' ? 'signed' : (exp.status === 'Pending' ? 'negotiating' : '')}`}>
+                          {exp.status}
+                        </span>
+                      </td>
+                      <td className="num text-dim">{formatINR(exp.taxAmount)}</td>
+                      <td className="num" style={{ fontWeight: '600' }}>{formatINR(exp.amount + (exp.taxAmount || 0))}</td>
+                    </tr>
+                  ))}
+                  {expenses.length === 0 && (
+                    <tr>
+                      <td colSpan="5" className="text-dim text-center">No expenses logged yet.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
