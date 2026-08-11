@@ -2,6 +2,9 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 from agents.script_analyzer import analyze_script_text
 from agents.budget_assistant import run_budget_assistant

@@ -1,8 +1,6 @@
 package handlers
 
 import (
-	"bytes"
-	"encoding/json"
 	"film-production-erp/models"
 	"film-production-erp/services"
 	"io"
@@ -53,21 +51,8 @@ func UploadScript(db *gorm.DB) gin.HandlerFunc {
 			db.Create(&scenes[i])
 		}
 
-		// Call Python AI Sidecar for entity extraction
-		aiReqBody, _ := json.Marshal(map[string]string{"text": string(content)})
-		resp, err := http.Post("http://localhost:8000/analyze-script", "application/json", bytes.NewBuffer(aiReqBody))
-		var aiResult AIAnalysisResult
-		
-		if err == nil && resp.StatusCode == http.StatusOK {
-			bodyBytes, _ := io.ReadAll(resp.Body)
-			json.Unmarshal(bodyBytes, &aiResult)
-			resp.Body.Close()
-		} else {
-			// Fallback to basic regex extractor if sidecar fails
-			aiResult.Elements = services.ExtractEntities(uint(prodID), scenes)
-		}
-		
-		elements := aiResult.Elements
+		// Run entity extraction (uses AI Orchestrator if GEMINI_API_KEY is set, else regex fallback)
+		elements := services.ExtractEntities(uint(prodID), scenes)
 
 		// Save elements
 		for i := range elements {

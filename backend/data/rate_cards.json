@@ -1,44 +1,84 @@
 {
-  "currency": "INR",
-  "unit": "Lakhs",
-  "multiplier": 100000,
-  "rates": {
-    "departments": {
-      "Cast": {
-        "Small": {"Lead": 15, "Supporting": 2, "Background": 0.05},
-        "Medium": {"Lead": 150, "Supporting": 15, "Background": 0.05},
-        "Large": {"Lead": 1000, "Supporting": 50, "Background": 0.05}
+  "INR": {
+    "currency": "INR",
+    "unit": "Lakhs",
+    "multiplier": 100000,
+    "rates": {
+      "departments": {
+        "Cast": {
+          "Small": {"Lead": 15, "Supporting": 2, "Background": 0.05},
+          "Medium": {"Lead": 150, "Supporting": 15, "Background": 0.05},
+          "Large": {"Lead": 1000, "Supporting": 50, "Background": 0.05}
+        },
+        "Locations": {
+          "Small": {"DayRate": 0.5, "Permit": 0.2, "Recce": 0.1},
+          "Medium": {"DayRate": 2.0, "Permit": 0.5, "Recce": 0.2},
+          "Large": {"DayRate": 5.0, "Permit": 1.0, "Recce": 0.5}
+        },
+        "Equipment": {
+          "Small": {"Camera": 0.5, "Lighting": 0.3, "Sound": 0.1},
+          "Medium": {"Camera": 2.0, "Lighting": 1.0, "Sound": 0.5},
+          "Large": {"Camera": 5.0, "Lighting": 2.5, "Sound": 1.0}
+        }
+      }
+    },
+    "allocations": {
+      "Bollywood": {
+        "PreProduction": 10,
+        "Production": 40,
+        "PostProduction": 20,
+        "Marketing": 30
       },
-      "Locations": {
-        "Small": {"DayRate": 0.5, "Permit": 0.2, "Recce": 0.1},
-        "Medium": {"DayRate": 2.0, "Permit": 0.5, "Recce": 0.2},
-        "Large": {"DayRate": 5.0, "Permit": 1.0, "Recce": 0.5}
+      "Regional": {
+        "PreProduction": 5,
+        "Production": 55,
+        "PostProduction": 25,
+        "Marketing": 15
       },
-      "Equipment": {
-        "Small": {"Camera": 0.5, "Lighting": 0.3, "Sound": 0.1},
-        "Medium": {"Camera": 2.0, "Lighting": 1.0, "Sound": 0.5},
-        "Large": {"Camera": 5.0, "Lighting": 2.5, "Sound": 1.0}
+      "Independent": {
+        "PreProduction": 15,
+        "Production": 60,
+        "PostProduction": 15,
+        "Marketing": 10
       }
     }
   },
-  "allocations": {
-    "Bollywood": {
-      "PreProduction": 10,
-      "Production": 40,
-      "PostProduction": 20,
-      "Marketing": 30
+  "USD": {
+    "currency": "USD",
+    "unit": "Thousands",
+    "multiplier": 1000,
+    "rates": {
+      "departments": {
+        "Cast": {
+          "Small": {"Lead": 20, "Supporting": 5, "Background": 0.2},
+          "Medium": {"Lead": 250, "Supporting": 25, "Background": 0.5},
+          "Large": {"Lead": 2000, "Supporting": 100, "Background": 1.0}
+        },
+        "Locations": {
+          "Small": {"DayRate": 1.0, "Permit": 0.5, "Recce": 0.2},
+          "Medium": {"DayRate": 5.0, "Permit": 1.0, "Recce": 0.5},
+          "Large": {"DayRate": 15.0, "Permit": 5.0, "Recce": 1.0}
+        },
+        "Equipment": {
+          "Small": {"Camera": 1.0, "Lighting": 0.5, "Sound": 0.2},
+          "Medium": {"Camera": 5.0, "Lighting": 2.5, "Sound": 1.0},
+          "Large": {"Camera": 15.0, "Lighting": 7.5, "Sound": 2.5}
+        }
+      }
     },
-    "Regional": {
-      "PreProduction": 5,
-      "Production": 55,
-      "PostProduction": 25,
-      "Marketing": 15
-    },
-    "Independent": {
-      "PreProduction": 15,
-      "Production": 60,
-      "PostProduction": 15,
-      "Marketing": 10
+    "allocations": {
+      "Hollywood": {
+        "PreProduction": 15,
+        "Production": 40,
+        "PostProduction": 15,
+        "Marketing": 30
+      },
+      "Independent": {
+        "PreProduction": 15,
+        "Production": 60,
+        "PostProduction": 15,
+        "Marketing": 10
+      }
     }
   }
 }

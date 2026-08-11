@@ -4,34 +4,44 @@ import (
 	"film-production-erp/models"
 	"regexp"
 	"strings"
+	"os"
 )
 
 // ExtractEntities processes scenes and extracts characters, locations, and props.
-// Using regex and simple heuristics as a proxy for an NLP model.
+// It will try to use the Gemini AI Orchestrator first, and fallback to regex if no API key is provided.
 func ExtractEntities(productionID uint, scenes []models.Scene) []models.ProductionElement {
-	elementsMap := make(map[string]*models.ProductionElement)
+	// If GEMINI_API_KEY is present, use the Orchestrator
+	if os.Getenv("GEMINI_API_KEY") != "" {
+		orchestrator := NewAIOrchestrator()
+		elements, err := orchestrator.RunExtractionPipeline(productionID, scenes)
+		if err == nil && len(elements) > 0 {
+			return elements
+		}
+		// If it failed for some reason, fallback to basic regex
+	}
 
-	// Regex to match uppercase words for character dialogue
+	elementsMap := make(map[string]*models.ProductionElement)
 	characterRegex := regexp.MustCompile(`^[A-Z][A-Z\s]+$`)
 
 	for _, scene := range scenes {
-		// Extract location from scene heading
 		if scene.Location != "" {
 			locName := strings.ToUpper(scene.Location)
 			if _, exists := elementsMap[locName]; !exists {
 				elementsMap[locName] = &models.ProductionElement{
 					ProductionID:  productionID,
+					SceneID:       scene.ID,
 					Type:          "Location",
-					Name:          scene.Location, // Keep original casing if possible, but we use upper for key
+					Name:          scene.Location,
 					Mentions:      0,
 					EstimatedDays: 0,
+					IsAIExtracted: false,
+					IsUserVerified: false,
 				}
 			}
 			elementsMap[locName].Mentions++
-			elementsMap[locName].EstimatedDays += 0.5 // Rough estimate
+			elementsMap[locName].EstimatedDays += 0.5
 		}
 
-		// Parse lines for characters and props
 		lines := strings.Split(scene.Content, "\n")
 		for _, line := range lines {
 			trimmed := strings.TrimSpace(line)
@@ -39,27 +49,28 @@ func ExtractEntities(productionID uint, scenes []models.Scene) []models.Producti
 				continue
 			}
 
-			// Simple character heuristic: line is all caps and not a scene heading
 			if characterRegex.MatchString(trimmed) && !strings.Contains(trimmed, "EXT.") && !strings.Contains(trimmed, "INT.") {
 				charName := trimmed
 				if _, exists := elementsMap[charName]; !exists {
 					elementsMap[charName] = &models.ProductionElement{
 						ProductionID:  productionID,
+						SceneID:       scene.ID,
 						Type:          "Character",
 						Name:          charName,
 						Mentions:      0,
 						EstimatedDays: 0,
+						IsAIExtracted: false,
+						IsUserVerified: false,
 					}
 				}
 				elementsMap[charName].Mentions++
-				elementsMap[charName].EstimatedDays += 0.1 // Rough estimate per line/mention
+				elementsMap[charName].EstimatedDays += 0.1
 			}
 		}
 	}
 
 	var elements []models.ProductionElement
 	for _, el := range elementsMap {
-		// Ceiling for estimated days
 		if el.EstimatedDays < 1 {
 			el.EstimatedDays = 1
 		}

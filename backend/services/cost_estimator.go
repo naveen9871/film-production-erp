@@ -6,7 +6,7 @@ import (
 	"os"
 )
 
-type RateCards struct {
+type RateCard struct {
 	Currency   string `json:"currency"`
 	Unit       string `json:"unit"`
 	Multiplier int    `json:"multiplier"`
@@ -16,7 +16,7 @@ type RateCards struct {
 	Allocations map[string]map[string]float64 `json:"allocations"`
 }
 
-var GlobalRateCards RateCards
+var GlobalRateCards map[string]RateCard
 
 func LoadRateCards() error {
 	data, err := os.ReadFile("data/rate_cards.json")
@@ -27,7 +27,7 @@ func LoadRateCards() error {
 	return err
 }
 
-func EstimateCostForElement(element models.ProductionElement, scale string) float64 {
+func EstimateCostForElement(element models.ProductionElement, scale string, currency string) float64 {
 	// Simple lookup based on element type and scale
 	dept := ""
 	cat := ""
@@ -47,16 +47,30 @@ func EstimateCostForElement(element models.ProductionElement, scale string) floa
 	case "Equipment":
 		dept = "Equipment"
 		cat = "Camera" // default
+	case "Prop", "Costume":
+		dept = "Art"
+		cat = element.Type
+	case "Crew":
+		dept = "Crew"
+		cat = "Daily"
 	default:
 		return 0
 	}
 
-	if scales, ok := GlobalRateCards.Rates.Departments[dept]; ok {
-		if categories, ok := scales[scale]; ok {
-			if rate, ok := categories[cat]; ok {
-				return rate * element.EstimatedDays
+	if rateCard, ok := GlobalRateCards[currency]; ok {
+		if scales, ok := rateCard.Rates.Departments[dept]; ok {
+			if categories, ok := scales[scale]; ok {
+				if rate, ok := categories[cat]; ok {
+					return rate * element.EstimatedDays
+				}
 			}
 		}
 	}
+	
+	// Fallback heuristic if not in rate card to avoid 0 cost
+	if dept == "Art" || dept == "Equipment" || dept == "Crew" {
+		return 5000.0 * element.EstimatedDays
+	}
+	
 	return 0
 }

@@ -22,12 +22,9 @@ func AddExpense(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		// Update actual cost on budget item
-		var budgetItem models.BudgetItem
-		if err := db.First(&budgetItem, expense.BudgetItemID).Error; err == nil {
-			budgetItem.ActualCost += expense.Amount
-			db.Save(&budgetItem)
-		}
+		// Update actual cost on budget item using SQL UPDATE to avoid race conditions
+		db.Model(&models.BudgetItem{}).Where("id = ?", expense.BudgetItemID).
+			UpdateColumn("actual_cost", gorm.Expr("actual_cost + ?", expense.Amount))
 
 		c.JSON(http.StatusCreated, expense)
 	}

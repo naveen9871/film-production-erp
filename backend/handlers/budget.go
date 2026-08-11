@@ -25,7 +25,10 @@ func GenerateBudgetQuote(db *gorm.DB) gin.HandlerFunc {
 		// Delete existing AI generated budget items for safety
 		db.Where("production_id = ? AND is_manually_set = ?", prodID, false).Delete(&models.BudgetItem{})
 
-		budgetItems := services.GenerateQuote(&prod, elements)
+		var activeRateCard models.RateCard
+		db.Where("is_active = ?", true).First(&activeRateCard)
+
+		budgetItems := services.GenerateQuote(db, &prod, elements, &activeRateCard)
 		for i := range budgetItems {
 			db.Create(&budgetItems[i])
 		}
@@ -47,7 +50,10 @@ func AllocateBudget(db *gorm.DB) gin.HandlerFunc {
 		// Delete existing allocations
 		db.Where("production_id = ? AND category = ?", prodID, "Allocation").Delete(&models.BudgetItem{})
 
-		budgetItems := services.AllocateBudget(&prod)
+		var activeRateCard models.RateCard
+		db.Where("is_active = ?", true).First(&activeRateCard)
+
+		budgetItems := services.AllocateBudget(&prod, &activeRateCard)
 		for i := range budgetItems {
 			db.Create(&budgetItems[i])
 		}
