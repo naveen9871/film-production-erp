@@ -18,21 +18,23 @@ func GetDashboardSummary(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		var totalEstimatedCost float64
-		var totalActualCost float64
-		var totalVariance float64
+		var totalEstimatedCost, totalActualCost, totalVariance float64
 
-		// Sum up budget items
-		db.Model(&models.BudgetItem{}).Where("production_id = ?", prodID).Select("sum(estimated_cost)").Row().Scan(&totalEstimatedCost)
-		db.Model(&models.BudgetItem{}).Where("production_id = ?", prodID).Select("sum(actual_cost)").Row().Scan(&totalActualCost)
-		db.Model(&models.BudgetItem{}).Where("production_id = ?", prodID).Select("sum(variance)").Row().Scan(&totalVariance)
+		// Sum up budget items in one query
+		db.Model(&models.BudgetItem{}).
+			Where("production_id = ?", prodID).
+			Select("COALESCE(SUM(estimated_cost), 0), COALESCE(SUM(actual_cost), 0), COALESCE(SUM(variance), 0)").
+			Row().
+			Scan(&totalEstimatedCost, &totalActualCost, &totalVariance)
 
-		var totalExpectedRevenue float64
-		var totalActualRevenue float64
+		var totalExpectedRevenue, totalActualRevenue float64
 
-		// Sum up revenue items
-		db.Model(&models.RightsRecord{}).Where("production_id = ?", prodID).Select("sum(expected_revenue)").Row().Scan(&totalExpectedRevenue)
-		db.Model(&models.RightsRecord{}).Where("production_id = ?", prodID).Select("sum(actual_revenue)").Row().Scan(&totalActualRevenue)
+		// Sum up revenue items in one query
+		db.Model(&models.RightsRecord{}).
+			Where("production_id = ?", prodID).
+			Select("COALESCE(SUM(expected_revenue), 0), COALESCE(SUM(actual_revenue), 0)").
+			Row().
+			Scan(&totalExpectedRevenue, &totalActualRevenue)
 
 		c.JSON(http.StatusOK, gin.H{
 			"totalBudget":          prod.TotalBudget,

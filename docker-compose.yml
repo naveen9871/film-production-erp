@@ -30,7 +30,8 @@ services:
       - DB_NAME=${DB_NAME:-erp}
       - DB_PORT=5432
       - JWT_SECRET=${JWT_SECRET:-super-secret-key-for-mvp}
-      - AI_SIDECAR_URL=http://ai-service:8000
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - ENABLE_DB_RESET=false
     depends_on:
       postgres:
         condition: service_healthy

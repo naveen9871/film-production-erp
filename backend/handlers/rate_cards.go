@@ -10,8 +10,9 @@ import (
 
 func GetRateCards(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		orgID, _ := c.Get("orgID")
 		var cards []models.RateCard
-		db.Find(&cards)
+		db.Where("organization_id = ?", uint(orgID.(float64))).Find(&cards)
 		c.JSON(http.StatusOK, cards)
 	}
 }
@@ -23,6 +24,8 @@ func CreateRateCard(db *gorm.DB) gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
+		orgID, _ := c.Get("orgID")
+		card.OrganizationID = uint(orgID.(float64))
 		
 		db.Create(&card)
 		c.JSON(http.StatusCreated, card)
@@ -31,10 +34,11 @@ func CreateRateCard(db *gorm.DB) gin.HandlerFunc {
 
 func UpdateRateCard(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		orgID, _ := c.Get("orgID")
 		id := c.Param("id")
 		
 		var card models.RateCard
-		if err := db.First(&card, id).Error; err != nil {
+		if err := db.Where("organization_id = ?", uint(orgID.(float64))).First(&card, id).Error; err != nil {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Rate card not found"})
 			return
 		}
@@ -52,13 +56,14 @@ func UpdateRateCard(db *gorm.DB) gin.HandlerFunc {
 
 func ActivateRateCard(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		orgID, _ := c.Get("orgID")
 		id := c.Param("id")
 		
-		// Deactivate all others
-		db.Model(&models.RateCard{}).Where("1 = 1").Update("is_active", false)
+		// Deactivate all others for this org
+		db.Model(&models.RateCard{}).Where("organization_id = ?", uint(orgID.(float64))).Update("is_active", false)
 
 		var card models.RateCard
-		if err := db.First(&card, id).Error; err != nil {
+		if err := db.Where("organization_id = ?", uint(orgID.(float64))).First(&card, id).Error; err != nil {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Rate card not found"})
 			return
 		}

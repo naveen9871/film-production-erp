@@ -43,11 +43,28 @@ func UploadScript(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
+		// Create new ScriptVersion
+		var lastVersion models.ScriptVersion
+		db.Where("production_id = ?", prodID).Order("version desc").First(&lastVersion)
+		
+		newVersionNum := 1
+		if lastVersion.ID != 0 {
+			newVersionNum = lastVersion.Version + 1
+		}
+		
+		newVersion := models.ScriptVersion{
+			ProductionID: uint(prodID),
+			Version:      newVersionNum,
+			Label:        "Draft " + strconv.Itoa(newVersionNum),
+		}
+		db.Create(&newVersion)
+
 		// Parse script
 		scenes := services.ParseScript(uint(prodID), string(content))
 		
 		// Save scenes
 		for i := range scenes {
+			scenes[i].ScriptVersionID = newVersion.ID
 			db.Create(&scenes[i])
 		}
 
@@ -57,13 +74,21 @@ func UploadScript(db *gorm.DB) gin.HandlerFunc {
 		// Save elements
 		for i := range elements {
 			elements[i].ProductionID = uint(prodID)
+			elements[i].ScriptVersionID = newVersion.ID
 			db.Create(&elements[i])
+		}
+
+		var diff *models.ScriptDiff
+		if lastVersion.ID != 0 {
+			diff = services.CompareScriptVersions(db, uint(prodID), lastVersion.ID, newVersion.ID)
 		}
 
 		c.JSON(http.StatusOK, gin.H{
 			"message":  "Script processed successfully",
+			"version":  newVersion,
 			"scenes":   len(scenes),
 			"elements": len(elements),
+			"diff":     diff,
 		})
 	}
 }

@@ -7,6 +7,7 @@ const ScriptAnalysis = ({ productionId }) => {
   const [elements, setElements] = useState([]);
   const [status, setStatus] = useState('idle'); // idle, uploading, analyzing, complete, error
   const [progress, setProgress] = useState(0);
+  const [diffReport, setDiffReport] = useState(null);
 
   useEffect(() => {
     if (productionId) {
@@ -49,7 +50,10 @@ const ScriptAnalysis = ({ productionId }) => {
         });
       }, 800);
 
-      await uploadScript(productionId, formData);
+      const res = await uploadScript(productionId, formData);
+      if (res && res.data && res.data.diff) {
+        setDiffReport(res.data.diff);
+      }
       
       clearInterval(progressInterval);
       setProgress(100);
@@ -185,6 +189,34 @@ const ScriptAnalysis = ({ productionId }) => {
                       )}
                     </tbody>
                   </table>
+                </div>
+              </div>
+            )}
+
+            {status === 'complete' && diffReport && (
+              <div style={{ marginTop: '24px', background: 'var(--surface-sunken)', padding: '24px', borderRadius: '8px' }}>
+                <h4 style={{ marginBottom: '16px' }}>Revision Diff Report</h4>
+                <div className="grid-3" style={{ gap: '16px', textAlign: 'center' }}>
+                  <div style={{ padding: '16px', background: 'var(--surface)', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                    <div className="text-dim text-sm">Scenes Added</div>
+                    <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--green)' }}>+{diffReport.addedScenes}</div>
+                  </div>
+                  <div style={{ padding: '16px', background: 'var(--surface)', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                    <div className="text-dim text-sm">Scenes Removed</div>
+                    <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--red)' }}>-{diffReport.removedScenes}</div>
+                  </div>
+                  <div style={{ padding: '16px', background: 'var(--surface)', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                    <div className="text-dim text-sm">Scenes Modified</div>
+                    <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--accent)' }}>~{diffReport.modifiedScenes}</div>
+                  </div>
+                  <div style={{ padding: '16px', background: 'var(--surface)', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                    <div className="text-dim text-sm">Elements Added</div>
+                    <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--green)' }}>+{diffReport.addedElements}</div>
+                  </div>
+                  <div style={{ padding: '16px', background: 'var(--surface)', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                    <div className="text-dim text-sm">Elements Removed</div>
+                    <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--red)' }}>-{diffReport.removedElements}</div>
+                  </div>
                 </div>
               </div>
             )}

@@ -1,7 +1,49 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { fetchEntities, updateEntity } from '../api';
 
 const SceneBuilder = ({ productionId }) => {
   const [activeTab, setActiveTab] = useState('characters');
+  const [entities, setEntities] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (productionId) {
+      loadEntities();
+    }
+  }, [productionId]);
+
+  const loadEntities = async () => {
+    setLoading(true);
+    try {
+      const res = await fetchEntities(productionId);
+      setEntities(res.data || []);
+    } catch (error) {
+      console.error("Failed to load entities", error);
+    }
+    setLoading(false);
+  };
+
+  const handleVerifyToggle = async (entity) => {
+    try {
+      const res = await updateEntity(entity.id, { isUserVerified: !entity.isUserVerified });
+      setEntities(entities.map(e => e.id === entity.id ? res.data : e));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const typeMap = {
+    'characters': 'Character',
+    'props': 'Prop',
+    'locations': 'Location',
+    'costume': 'Costume',
+    'equipment': 'Equipment'
+  };
+
+  const currentType = typeMap[activeTab];
+  const activeEntities = entities.filter(e => e.type === currentType || (currentType === 'Costume' && e.type === 'Wardrobe'));
+
+  const countEntities = (type) => entities.filter(e => e.type === type || (type === 'Costume' && e.type === 'Wardrobe')).length;
 
   return (
     <div className="screen active" id="entitybuilder">
@@ -16,7 +58,9 @@ const SceneBuilder = ({ productionId }) => {
       <div className="sb-launcher">
         <div className="sb-launcher-head">
           <h3>Entity Types</h3>
-          <span>7 characters · 12 props · 6 locations · 5 costumes · 4 equipment</span>
+          <span>
+            {countEntities('Character')} characters · {countEntities('Prop')} props · {countEntities('Location')} locations · {countEntities('Costume')} costumes · {countEntities('Equipment')} equipment
+          </span>
         </div>
         <div className="sb-grid">
           <div 
@@ -30,7 +74,7 @@ const SceneBuilder = ({ productionId }) => {
               </svg>
             </div>
             <div className="sb-card-label">Characters</div>
-            <div className="sb-card-count">7 entities</div>
+            <div className="sb-card-count">{countEntities('Character')} entities</div>
           </div>
           <div 
             className={`sb-card ${activeTab === 'props' ? 'active' : ''}`}
@@ -43,7 +87,7 @@ const SceneBuilder = ({ productionId }) => {
               </svg>
             </div>
             <div className="sb-card-label">Props</div>
-            <div className="sb-card-count">12 entities</div>
+            <div className="sb-card-count">{countEntities('Prop')} entities</div>
           </div>
           <div 
             className={`sb-card ${activeTab === 'locations' ? 'active' : ''}`}
@@ -56,7 +100,7 @@ const SceneBuilder = ({ productionId }) => {
               </svg>
             </div>
             <div className="sb-card-label">Locations</div>
-            <div className="sb-card-count">6 entities</div>
+            <div className="sb-card-count">{countEntities('Location')} entities</div>
           </div>
           <div 
             className={`sb-card ${activeTab === 'costume' ? 'active' : ''}`}
@@ -68,7 +112,7 @@ const SceneBuilder = ({ productionId }) => {
               </svg>
             </div>
             <div className="sb-card-label">Costume</div>
-            <div className="sb-card-count">5 entities</div>
+            <div className="sb-card-count">{countEntities('Costume')} entities</div>
           </div>
           <div 
             className={`sb-card ${activeTab === 'equipment' ? 'active' : ''}`}
@@ -82,162 +126,57 @@ const SceneBuilder = ({ productionId }) => {
               </svg>
             </div>
             <div className="sb-card-label">Equipment</div>
-            <div className="sb-card-count">4 entities</div>
+            <div className="sb-card-count">{countEntities('Equipment')} entities</div>
           </div>
         </div>
       </div>
 
-      {/* Characters */}
-      <div className={`entity-panel ${activeTab === 'characters' ? 'active' : ''}`}>
-        <div className="panel">
-          <div className="panel-head"><h3>Characters</h3><span className="hint">7 entities</span></div>
-          <div className="panel-body">
-            <table>
-              <thead>
-                <tr>
-                  <th>Name</th><th>Actor</th><th>Scenes</th><th className="num">Mentions</th><th className="num">Shoot Days</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr><td>Kabir</td><td>Vikrant Bose</td><td className="mono">SC 01–04</td><td className="num">37</td><td className="num">18</td></tr>
-                <tr><td>Nadia</td><td>Ira Kapoor</td><td className="mono">SC 01, 03</td><td className="num">22</td><td className="num">9</td></tr>
-                <tr><td>Inspector Rane</td><td>Unassigned</td><td className="mono">SC 03</td><td className="num">9</td><td className="num">3</td></tr>
-                <tr><td>Warehouse Guard</td><td>Unassigned</td><td className="mono">SC 03</td><td className="num">4</td><td className="num">2</td></tr>
-                <tr><td>Cafe Owner</td><td>Unassigned</td><td className="mono">SC 01</td><td className="num">3</td><td className="num">1</td></tr>
-              </tbody>
-            </table>
+      <div className="entity-panel active">
+        <div className="panel" style={{flex: 1}}>
+          <div className="panel-head">
+            <h3>{activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}</h3>
+            <span className="hint">{activeEntities.length} entities</span>
           </div>
-        </div>
-        <div className="panel">
-          <div className="panel-head"><h3>Add Character</h3></div>
           <div className="panel-body">
-            <div className="form-row"><label>Character Name</label><input type="text" placeholder="Inspector Rane" /></div>
-            <div className="form-row"><label>Actor</label><input type="text" placeholder="Cast pending" /></div>
-            <div className="form-row"><label>Scenes</label><input type="text" placeholder="SC 03" /></div>
-            <div className="form-row"><label>Rate Card Tier</label><select><option>Lead</option><option>Supporting</option><option>Junior Artist</option></select></div>
-            <button className="btn primary" style={{width: '100%', justifyContent: 'center'}}>Save Character</button>
-          </div>
-        </div>
-      </div>
-
-      {/* Props */}
-      <div className={`entity-panel ${activeTab === 'props' ? 'active' : ''}`}>
-        <div className="panel">
-          <div className="panel-head"><h3>Props</h3><span className="hint">12 entities</span></div>
-          <div className="panel-body">
-            <table>
-              <thead>
-                <tr>
-                  <th>Prop</th><th>Category</th><th>Scenes</th><th className="num">Mentions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr><td>Vintage Revolver</td><td>Weapon</td><td className="mono">SC 03</td><td className="num">11</td></tr>
-                <tr><td>Leather Briefcase</td><td>Set Dressing</td><td className="mono">SC 02, 03</td><td className="num">6</td></tr>
-                <tr><td>Kabir's Wristwatch</td><td>Personal</td><td className="mono">SC 01–04</td><td className="num">5</td></tr>
-                <tr><td>Coffee Shop Menu Board</td><td>Set Dressing</td><td className="mono">SC 01</td><td className="num">2</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-        <div className="panel">
-          <div className="panel-head"><h3>Add Prop</h3></div>
-          <div className="panel-body">
-            <div className="form-row"><label>Prop Name</label><input type="text" placeholder="Vintage Revolver" /></div>
-            <div className="form-row"><label>Category</label><select><option>Weapon</option><option>Set Dressing</option><option>Personal</option></select></div>
-            <div className="form-row"><label>Scenes</label><input type="text" placeholder="SC 03" /></div>
-            <button className="btn primary" style={{width: '100%', justifyContent: 'center'}}>Save Prop</button>
-          </div>
-        </div>
-      </div>
-
-      {/* Locations */}
-      <div className={`entity-panel ${activeTab === 'locations' ? 'active' : ''}`}>
-        <div className="panel">
-          <div className="panel-head"><h3>Locations</h3><span className="hint">6 entities</span></div>
-          <div className="panel-body">
-            <table>
-              <thead>
-                <tr>
-                  <th>Location</th><th>Int/Ext</th><th>Scenes</th><th>Permit</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr><td>Coffee Shop</td><td className="mono">INT</td><td className="mono">SC 01</td><td><span className="badge signed">Confirmed</span></td></tr>
-                <tr><td>Marine Drive</td><td className="mono">EXT</td><td className="mono">SC 02</td><td><span className="badge negotiating">Pending</span></td></tr>
-                <tr><td>Warehouse</td><td className="mono">INT</td><td className="mono">SC 03</td><td><span className="badge signed">Confirmed</span></td></tr>
-                <tr><td>Highway Bypass</td><td className="mono">EXT</td><td className="mono">SC 04</td><td><span className="badge negotiating">Pending</span></td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-        <div className="panel">
-          <div className="panel-head"><h3>Add Location</h3></div>
-          <div className="panel-body">
-            <div className="form-row"><label>Location Name</label><input type="text" placeholder="Marine Drive" /></div>
-            <div className="form-row"><label>Int / Ext</label><select><option>Interior</option><option>Exterior</option></select></div>
-            <div className="form-row"><label>Scenes</label><input type="text" placeholder="SC 02" /></div>
-            <button className="btn primary" style={{width: '100%', justifyContent: 'center'}}>Save Location</button>
-          </div>
-        </div>
-      </div>
-
-      {/* Costume */}
-      <div className={`entity-panel ${activeTab === 'costume' ? 'active' : ''}`}>
-        <div className="panel">
-          <div className="panel-head"><h3>Costume</h3><span className="hint">5 entities</span></div>
-          <div className="panel-body">
-            <table>
-              <thead>
-                <tr>
-                  <th>Item</th><th>Character</th><th>Scenes</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr><td>Trench Coat</td><td>Kabir</td><td className="mono">SC 02, 04</td></tr>
-                <tr><td>Red Evening Dress</td><td>Nadia</td><td className="mono">SC 03</td></tr>
-                <tr><td>Police Uniform</td><td>Inspector Rane</td><td className="mono">SC 03</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-        <div className="panel">
-          <div className="panel-head"><h3>Add Costume</h3></div>
-          <div className="panel-body">
-            <div className="form-row"><label>Item Name</label><input type="text" placeholder="Trench Coat" /></div>
-            <div className="form-row"><label>Character</label><input type="text" placeholder="Kabir" /></div>
-            <div className="form-row"><label>Scenes</label><input type="text" placeholder="SC 02, 04" /></div>
-            <button className="btn primary" style={{width: '100%', justifyContent: 'center'}}>Save Costume</button>
-          </div>
-        </div>
-      </div>
-
-      {/* Equipment */}
-      <div className={`entity-panel ${activeTab === 'equipment' ? 'active' : ''}`}>
-        <div className="panel">
-          <div className="panel-head"><h3>Equipment</h3><span className="hint">4 entities</span></div>
-          <div className="panel-body">
-            <table>
-              <thead>
-                <tr>
-                  <th>Equipment</th><th>Type</th><th>Scenes</th><th className="num">Rental Days</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr><td>Steadicam Rig</td><td>Camera</td><td className="mono">SC 02</td><td className="num">2</td></tr>
-                <tr><td>LED Panel Kit</td><td>Lighting</td><td className="mono">SC 01, 03</td><td className="num">4</td></tr>
-                <tr><td>Drone (DJI)</td><td>Aerial</td><td className="mono">SC 04</td><td className="num">1</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-        <div className="panel">
-          <div className="panel-head"><h3>Add Equipment</h3></div>
-          <div className="panel-body">
-            <div className="form-row"><label>Equipment Name</label><input type="text" placeholder="Steadicam Rig" /></div>
-            <div className="form-row"><label>Type</label><select><option>Camera</option><option>Lighting</option><option>Sound</option><option>Aerial</option></select></div>
-            <div className="form-row"><label>Rental Days</label><input type="text" placeholder="2" /></div>
-            <button className="btn primary" style={{width: '100%', justifyContent: 'center'}}>Save Equipment</button>
+            {loading ? <p>Loading...</p> : (
+              <table>
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Sub Category</th>
+                    <th className="num">Mentions</th>
+                    <th className="num">Est. Days</th>
+                    <th>AI Source</th>
+                    <th>Verify</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {activeEntities.map(entity => (
+                    <tr key={entity.id}>
+                      <td>{entity.name}</td>
+                      <td>{entity.subCategory || '-'}</td>
+                      <td className="num">{entity.mentions}</td>
+                      <td className="num">{entity.estimatedDays}</td>
+                      <td>
+                        {entity.isAiExtracted ? 
+                          <span className="badge signed">AI Extracted</span> : 
+                          <span className="badge">Manual</span>}
+                      </td>
+                      <td>
+                        <input 
+                          type="checkbox" 
+                          checked={entity.isUserVerified} 
+                          onChange={() => handleVerifyToggle(entity)} 
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                  {activeEntities.length === 0 && (
+                    <tr><td colSpan="6" style={{textAlign:'center'}}>No entities found.</td></tr>
+                  )}
+                </tbody>
+              </table>
+            )}
           </div>
         </div>
       </div>

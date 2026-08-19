@@ -1,7 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import api from '../api';
+import { fetchDashboard, fetchExpenses, fetchBudget } from '../api';
 
 const Dashboard = ({ productionId }) => {
+  const [stats, setStats] = useState({
+    totalBudget: 0,
+    totalEstimatedCost: 0,
+    totalActualCost: 0,
+    totalVariance: 0,
+    totalExpectedRevenue: 0,
+    totalActualRevenue: 0,
+  });
   const [budget, setBudget] = useState([]);
   const [expenses, setExpenses] = useState([]);
 
@@ -13,20 +21,20 @@ const Dashboard = ({ productionId }) => {
 
   const fetchDashboardData = async () => {
     try {
-      const [budgetRes, expensesRes] = await Promise.all([
-        api.get(`/productions/${productionId}/budget`),
-        api.get(`/productions/${productionId}/expenses`)
+      const [dashRes, expRes, budgetRes] = await Promise.all([
+        fetchDashboard(productionId),
+        fetchExpenses(productionId),
+        fetchBudget(productionId)
       ]);
+      setStats(dashRes.data || {});
+      setExpenses(expRes.data || []);
       setBudget(budgetRes.data || []);
-      setExpenses(expensesRes.data || []);
     } catch (error) {
-      console.error("Failed to load dashboard data");
+      console.error("Failed to load dashboard data", error);
     }
   };
 
-  const totalEstimated = budget.reduce((acc, curr) => acc + curr.estimatedCost, 0);
-  const totalExpenses = expenses.reduce((acc, curr) => acc + curr.amount, 0);
-  const remainingBudget = totalEstimated - totalExpenses;
+  const remainingBudget = stats.totalEstimatedCost - stats.totalActualCost;
   const isOverBudget = remainingBudget < 0;
 
   // Formatting helper
@@ -35,26 +43,26 @@ const Dashboard = ({ productionId }) => {
       style: 'currency',
       currency: 'INR',
       maximumFractionDigits: 0
-    }).format(amount);
+    }).format(amount || 0);
   };
 
   // Group budget by department for the bar chart
   const deptBudgets = budget.reduce((acc, curr) => {
     if (!acc[curr.department]) acc[curr.department] = { est: 0, actual: 0 };
     acc[curr.department].est += curr.estimatedCost;
-    // For simplicity in MVP, we just map actual expenses to departments if possible.
+    acc[curr.department].actual += curr.actualCost;
     return acc;
   }, {});
 
-  // Hardcode ROI for MVP display matching image
-  const projectedROI = 9440000;
+  const projectedROI = stats.totalExpectedRevenue - stats.totalEstimatedCost;
+  const roiPercentage = stats.totalEstimatedCost > 0 ? ((projectedROI / stats.totalEstimatedCost) * 100).toFixed(1) : 0;
 
   return (
     <div className="screen active" id="dashboard">
       <div className="page-head">
         <div>
           <div className="page-title">Executive Summary</div>
-          <div className="page-sub">Financial health of Midnight Run · Updated today, 09:41</div>
+          <div className="page-sub">Financial health of production</div>
         </div>
         <button className="btn primary">+ Log Expense</button>
       </div>
@@ -67,7 +75,7 @@ const Dashboard = ({ productionId }) => {
             </div>
           </div>
           <div className="kpi-label">Total Estimated Budget</div>
-          <div className="kpi-value">{formatINR(totalEstimated)}</div>
+          <div className="kpi-value">{formatINR(stats.totalEstimatedCost)}</div>
           <svg className="kpi-spark" viewBox="0 0 100 28" preserveAspectRatio="none"><polyline points="0,20 15,18 30,19 45,14 60,15 75,9 100,7" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" opacity=".55"/></svg>
         </div>
         <div className="kpi">
@@ -78,7 +86,7 @@ const Dashboard = ({ productionId }) => {
             {isOverBudget && <div className="kpi-delta up-bad">▲ Over</div>}
           </div>
           <div className="kpi-label">Total Spent</div>
-          <div className={`kpi-value ${isOverBudget ? 'alert' : ''}`}>{formatINR(totalExpenses)}</div>
+          <div className={`kpi-value ${isOverBudget ? 'alert' : ''}`}>{formatINR(stats.totalActualCost)}</div>
           <svg className="kpi-spark" viewBox="0 0 100 28" preserveAspectRatio="none"><polyline points="0,22 15,20 30,16 45,17 60,10 75,11 100,3" fill="none" stroke="var(--danger)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" opacity=".55"/></svg>
         </div>
         <div className="kpi">
@@ -98,11 +106,13 @@ const Dashboard = ({ productionId }) => {
             <div className="kpi-icon green">
               <svg viewBox="0 0 24 24" fill="none" strokeWidth="2"><path d="M3 17l6-6 4 4 8-8" strokeLinecap="round" strokeLinejoin="round"/><path d="M15 7h6v6" strokeLinecap="round" strokeLinejoin="round"/></svg>
             </div>
-            <div className="kpi-delta up-good">+18.6%</div>
+            <div className={`kpi-delta ${projectedROI >= 0 ? 'up-good' : 'up-bad'}`}>
+              {projectedROI >= 0 ? '+' : ''}{roiPercentage}%
+            </div>
           </div>
           <div className="kpi-label">Projected ROI</div>
-          <div className="kpi-value good">{formatINR(projectedROI)}</div>
-          <svg className="kpi-spark" viewBox="0 0 100 28" preserveAspectRatio="none"><polyline points="0,24 15,20 30,21 45,15 60,13 75,8 100,4" fill="none" stroke="var(--success)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" opacity=".55"/></svg>
+          <div className={`kpi-value ${projectedROI >= 0 ? 'good' : 'alert'}`}>{formatINR(projectedROI)}</div>
+          <svg className="kpi-spark" viewBox="0 0 100 28" preserveAspectRatio="none"><polyline points="0,24 15,20 30,21 45,15 60,13 75,8 100,4" fill="none" stroke={projectedROI >= 0 ? 'var(--success)' : 'var(--danger)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" opacity=".55"/></svg>
         </div>
       </div>
 
@@ -110,13 +120,20 @@ const Dashboard = ({ productionId }) => {
         <div className="panel">
           <div className="panel-head"><h3>Spend by Department</h3><span className="link-txt">View budget →</span></div>
           <div className="panel-body">
-            {/* Keeping the reference data visually for demo purposes as requested, but you can map deptBudgets here */}
-            <div className="bar-row"><div className="bar-label">Cast</div><div className="bar-track"><div className="bar-fill" style={{width:'82%'}}></div></div><div className="bar-amt">₹1,42,00,000</div></div>
-            <div className="bar-row"><div className="bar-label">Locations</div><div className="bar-track"><div className="bar-fill over" style={{width:'96%'}}></div></div><div className="bar-amt">₹98,20,000</div></div>
-            <div className="bar-row"><div className="bar-label">Art Dept.</div><div className="bar-track"><div className="bar-fill" style={{width:'61%'}}></div></div><div className="bar-amt">₹54,60,000</div></div>
-            <div className="bar-row"><div className="bar-label">Equipment</div><div className="bar-track"><div className="bar-fill" style={{width:'74%'}}></div></div><div className="bar-amt">₹86,10,000</div></div>
-            <div className="bar-row"><div className="bar-label">Costume</div><div className="bar-track"><div className="bar-fill" style={{width:'58%'}}></div></div><div className="bar-amt">₹31,50,000</div></div>
-            <div className="bar-row"><div className="bar-label">Post-Prod.</div><div className="bar-track"><div className="bar-fill" style={{width:'35%'}}></div></div><div className="bar-amt">₹28,00,000</div></div>
+            {Object.keys(deptBudgets).length > 0 ? Object.entries(deptBudgets).map(([dept, vals]) => {
+              const pct = vals.est > 0 ? (vals.actual / vals.est) * 100 : 0;
+              return (
+                <div className="bar-row" key={dept}>
+                  <div className="bar-label">{dept}</div>
+                  <div className="bar-track">
+                    <div className={`bar-fill ${pct > 100 ? 'over' : ''}`} style={{width: `${Math.min(pct, 100)}%`}}></div>
+                  </div>
+                  <div className="bar-amt">{formatINR(vals.est)}</div>
+                </div>
+              );
+            }) : (
+              <div className="text-dim">No budget data available</div>
+            )}
           </div>
         </div>
 

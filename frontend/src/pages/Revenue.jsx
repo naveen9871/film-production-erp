@@ -1,186 +1,174 @@
 import React, { useState, useEffect } from 'react';
-import { fetchRevenue, logRevenue, fetchDashboard } from '../api';
+import { fetchDistributionAgreements, createDistributionAgreement, fetchDistributors } from '../api';
+import { Plus } from 'lucide-react';
 
 const Revenue = ({ productionId }) => {
-  const [rights, setRights] = useState([]);
-  const [stats, setStats] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState({ category: '', expectedRevenue: '', actualRevenue: '', buyer: '' });
+  const [agreements, setAgreements] = useState([]);
+  const [distributors, setDistributors] = useState([]);
+  const [showModal, setShowModal] = useState(false);
+  const [formData, setFormData] = useState({ distributorId: '', territory: '', rightsType: 'Theatrical', agreedAmount: '' });
 
   useEffect(() => {
-    if (productionId) fetchData();
+    if (productionId) {
+      loadData();
+    }
   }, [productionId]);
 
-  const fetchData = async () => {
-    setLoading(true);
+  const loadData = async () => {
     try {
-      const [rightsRes, dashRes] = await Promise.all([
-        fetchRevenue(productionId),
-        fetchDashboard(productionId)
+      const [agrRes, distRes] = await Promise.all([
+        fetchDistributionAgreements(productionId),
+        fetchDistributors()
       ]);
-      setRights(rightsRes.data || []);
-      setStats(dashRes.data);
+      setAgreements(agrRes.data || []);
+      setDistributors(distRes.data || []);
     } catch (err) {
       console.error(err);
     }
-    setLoading(false);
   };
 
-  const handleAddRights = async (e) => {
+  const handleCreate = async (e) => {
     e.preventDefault();
     try {
-      await logRevenue(productionId, {
-        category: form.category,
-        expectedRevenue: Number(form.expectedRevenue),
-        actualRevenue: Number(form.actualRevenue),
-        buyer: form.buyer,
-        status: 'Signed'
+      await createDistributionAgreement(productionId, {
+        distributorId: parseInt(formData.distributorId),
+        territory: formData.territory,
+        rightsType: formData.rightsType,
+        agreedAmount: parseFloat(formData.agreedAmount)
       });
-      setForm({ category: '', expectedRevenue: '', actualRevenue: '', buyer: '' });
-      await fetchData();
+      setShowModal(false);
+      loadData();
     } catch (err) {
       console.error(err);
     }
   };
 
-  const formatINR = (amt) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amt || 0);
-
-  const profitLoss = stats ? stats.totalExpectedRevenue - stats.totalActualCost : 0;
-  const roi = stats && stats.totalActualCost > 0 ? (profitLoss / stats.totalActualCost) * 100 : 0;
+  const totalRevenue = agreements.reduce((sum, a) => sum + a.agreedAmount, 0);
 
   return (
-    <div className="screen active" id="revenue">
+    <div className="screen active">
       <div className="page-head">
         <div>
-          <div className="page-title">Revenue & Rights</div>
-          <div className="page-sub">Manage IP rights, distribution deals, and revenue forecasting</div>
+          <div className="page-title">Distribution & Revenue</div>
+          <div className="page-sub">Territory-wise P&L and Rights Management</div>
+        </div>
+        <div className="actions">
+          <button className="btn primary" onClick={() => setShowModal(true)}>
+            <Plus size={16} /> New Agreement
+          </button>
         </div>
       </div>
 
-      {stats && (
-        <div className="kpi-row" style={{ marginBottom: '24px' }}>
-          <div className="kpi">
-            <div className="kpi-label">Total Actual Cost</div>
-            <div className="kpi-value">{formatINR(stats.totalActualCost)}</div>
-          </div>
-          <div className="kpi">
-            <div className="kpi-label">Total Expected Revenue</div>
-            <div className="kpi-value">{formatINR(stats.totalExpectedRevenue)}</div>
-          </div>
-          <div className="kpi">
-            <div className="kpi-label">Projected Profit / Loss</div>
-            <div className={`kpi-value ${profitLoss >= 0 ? 'good' : 'alert'}`}>
-              {formatINR(profitLoss)}
-            </div>
-            <div className={`kpi-delta ${profitLoss >= 0 ? 'up-good' : 'up-bad'}`} style={{ marginTop: '8px', display: 'inline-block' }}>
-              ROI: {roi.toFixed(1)}%
-            </div>
+      <div className="grid-3 mb-4">
+        <div className="stat-card">
+          <div className="stat-title">Total Recovered (Committed)</div>
+          <div className="stat-value" style={{ color: 'var(--green)' }}>
+            ₹{(totalRevenue / 100000).toFixed(2)}L
           </div>
         </div>
-      )}
+        <div className="stat-card">
+          <div className="stat-title">Active Deals</div>
+          <div className="stat-value">{agreements.length}</div>
+        </div>
+      </div>
 
-      <div className="grid-2">
-        <div className="panel" style={{ gridColumn: 'span 1' }}>
-          <div className="panel-head">
-            <h3>Log New Deal</h3>
-          </div>
-          <div className="panel-body">
-            <form onSubmit={handleAddRights} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div className="form-row">
-                <label>Category</label>
-                <select 
-                  className="input"
-                  value={form.category} 
-                  onChange={e => setForm({...form, category: e.target.value})}
-                  required
-                >
-                  <option value="">Select Category...</option>
-                  <option value="Satellite">Satellite</option>
-                  <option value="Audio">Audio</option>
-                  <option value="Theatrical">Theatrical</option>
-                  <option value="OTT">OTT</option>
-                  <option value="Overseas">Overseas</option>
-                </select>
-              </div>
-              <div className="form-row">
-                <label>Buyer / Partner</label>
-                <input 
-                  type="text" 
-                  className="input"
-                  placeholder="e.g. Netflix, T-Series" 
-                  value={form.buyer}
-                  onChange={e => setForm({...form, buyer: e.target.value})}
-                />
-              </div>
-              <div className="grid-2" style={{ gap: '16px' }}>
-                <div className="form-row">
-                  <label>Expected (₹)</label>
-                  <input 
-                    type="number" 
-                    className="input"
-                    placeholder="0" 
-                    value={form.expectedRevenue}
-                    onChange={e => setForm({...form, expectedRevenue: e.target.value})}
+      <div className="panel">
+        <div className="panel-head">
+          <h3>Distribution Deals</h3>
+        </div>
+        <div className="panel-body p-0">
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Distributor ID</th>
+                <th>Territory</th>
+                <th>Rights Type</th>
+                <th>Agreed Amount</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {agreements.length === 0 ? (
+                <tr>
+                  <td colSpan="5" className="text-center text-dim py-4">No active agreements found.</td>
+                </tr>
+              ) : (
+                agreements.map((a) => (
+                  <tr key={a.id}>
+                    <td>#{a.distributorId}</td>
+                    <td>{a.territory}</td>
+                    <td><span className="badge">{a.rightsType}</span></td>
+                    <td className="fw-500">₹{(a.agreedAmount / 100000).toFixed(2)}L</td>
+                    <td>{a.status || 'Signed'}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {showModal && (
+        <div className="modal-backdrop">
+          <div className="modal">
+            <div className="modal-head">
+              <h3>New Distribution Deal</h3>
+              <button className="close-btn" onClick={() => setShowModal(false)}>&times;</button>
+            </div>
+            <form onSubmit={handleCreate}>
+              <div className="modal-body">
+                <div className="form-group">
+                  <label>Distributor</label>
+                  <select 
                     required
+                    value={formData.distributorId} 
+                    onChange={e => setFormData({...formData, distributorId: e.target.value})}
+                  >
+                    <option value="">Select Distributor...</option>
+                    {distributors.map(d => (
+                      <option key={d.id} value={d.id}>{d.name} ({d.platformType})</option>
+                    ))}
+                  </select>
+                  {distributors.length === 0 && <small className="text-dim">Warning: No distributors exist yet. Go to global settings to add one.</small>}
+                </div>
+                <div className="form-group">
+                  <label>Territory</label>
+                  <input 
+                    type="text" required 
+                    placeholder="e.g., Nizam, Overseas, Global"
+                    value={formData.territory} 
+                    onChange={e => setFormData({...formData, territory: e.target.value})} 
                   />
                 </div>
-                <div className="form-row">
-                  <label>Actual (₹)</label>
-                  <input 
-                    type="number" 
-                    className="input"
-                    placeholder="0" 
-                    value={form.actualRevenue}
-                    onChange={e => setForm({...form, actualRevenue: e.target.value})}
-                  />
+                <div className="grid-2">
+                  <div className="form-group">
+                    <label>Rights Type</label>
+                    <select value={formData.rightsType} onChange={e => setFormData({...formData, rightsType: e.target.value})}>
+                      <option value="Theatrical">Theatrical</option>
+                      <option value="OTT">OTT / Streaming</option>
+                      <option value="Satellite">Satellite / TV</option>
+                      <option value="Audio">Audio / Music</option>
+                      <option value="Remake">Remake Rights</option>
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>Amount (₹)</label>
+                    <input 
+                      type="number" required 
+                      value={formData.agreedAmount} 
+                      onChange={e => setFormData({...formData, agreedAmount: e.target.value})} 
+                    />
+                  </div>
                 </div>
               </div>
-              
-              <button type="submit" className="btn primary" style={{ width: '100%', justifyContent: 'center', marginTop: '8px' }}>
-                Save Record
-              </button>
+              <div className="modal-foot">
+                <button type="button" className="btn" onClick={() => setShowModal(false)}>Cancel</button>
+                <button type="submit" className="btn primary">Sign Deal</button>
+              </div>
             </form>
           </div>
         </div>
-
-        <div className="panel" style={{ gridColumn: 'span 2' }}>
-          <div className="panel-head">
-            <h3>Rights Ledger</h3>
-            <span className="hint">{rights.length} records</span>
-          </div>
-          <div className="panel-body">
-            {loading ? <p>Loading...</p> : (
-              <table>
-                <thead>
-                  <tr>
-                    <th>Category</th>
-                    <th>Buyer</th>
-                    <th>Status</th>
-                    <th className="num">Expected (₹)</th>
-                    <th className="num">Actual (₹)</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rights.map(r => (
-                    <tr key={r.id}>
-                      <td style={{ fontWeight: '500' }}>{r.category}</td>
-                      <td>{r.buyer || '-'}</td>
-                      <td><span className="badge signed">{r.status || 'Signed'}</span></td>
-                      <td className="num">{formatINR(r.expectedRevenue)}</td>
-                      <td className="num" style={{ fontWeight: '600' }}>{formatINR(r.actualRevenue)}</td>
-                    </tr>
-                  ))}
-                  {rights.length === 0 && (
-                    <tr>
-                      <td colSpan="5" className="text-dim text-center">No revenue records logged yet.</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            )}
-          </div>
-        </div>
-      </div>
+      )}
     </div>
   );
 };

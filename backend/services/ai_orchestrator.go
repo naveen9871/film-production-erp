@@ -47,10 +47,11 @@ func (o *AIOrchestrator) RunExtractionPipeline(productionID uint, scenes []model
 	}
 	contextText := scriptContext.String()
 
-	// 2. Parallel extraction
+	// 2. Parallel extraction with Semaphore (Concurrency = 3)
 	var wg sync.WaitGroup
 	resultsChan := make(chan []ExtractedEntity, 7)
 	errorsChan := make(chan error, 7)
+	sem := make(chan struct{}, 3) // Semaphore to limit concurrency
 
 	extractionTasks := []struct {
 		name   string
@@ -91,6 +92,10 @@ func (o *AIOrchestrator) RunExtractionPipeline(productionID uint, scenes []model
 		go func(t struct{ name, prompt string }) {
 			defer wg.Done()
 			
+			// Acquire semaphore
+			sem <- struct{}{}
+			defer func() { <-sem }()
+			
 			fullPrompt := fmt.Sprintf(`You are a film production AI assistant. Analyze the following screenplay excerpt and extract the requested information. Be precise and comprehensive.
 			
 Screenplay:
@@ -115,8 +120,20 @@ Output Format: Return ONLY a valid JSON array of objects with this structure (no
 				return
 			}
 
+			// Clean response of potential markdown tags
+			cleanedResponse := strings.TrimSpace(response)
+			if strings.HasPrefix(cleanedResponse, "```json") {
+				cleanedResponse = strings.TrimPrefix(cleanedResponse, "```json")
+				cleanedResponse = strings.TrimSuffix(cleanedResponse, "```")
+				cleanedResponse = strings.TrimSpace(cleanedResponse)
+			} else if strings.HasPrefix(cleanedResponse, "```") {
+				cleanedResponse = strings.TrimPrefix(cleanedResponse, "```")
+				cleanedResponse = strings.TrimSuffix(cleanedResponse, "```")
+				cleanedResponse = strings.TrimSpace(cleanedResponse)
+			}
+
 			var extracted []ExtractedEntity
-			if err := json.Unmarshal([]byte(response), &extracted); err != nil {
+			if err := json.Unmarshal([]byte(cleanedResponse), &extracted); err != nil {
 				errorsChan <- fmt.Errorf("%s parsing failed: %w. Raw: %s", t.name, err, response)
 				return
 			}

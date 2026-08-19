@@ -17,6 +17,13 @@ func UpdateEntity(db *gorm.DB) gin.HandlerFunc {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Entity not found"})
 			return
 		}
+		
+		orgID, _ := c.Get("orgID")
+		var prod models.Production
+		if err := db.First(&prod, entity.ProductionID).Error; err != nil || prod.OrganizationID != uint(orgID.(float64)) {
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "Access denied"})
+			return
+		}
 
 		var updateData map[string]interface{}
 		if err := c.ShouldBindJSON(&updateData); err != nil {

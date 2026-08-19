@@ -2,50 +2,89 @@ package handlers
 
 import (
 	"film-production-erp/models"
-	"film-production-erp/services"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
-func AddRightsRecord(db *gorm.DB) gin.HandlerFunc {
+func AddDistributor(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var record models.RightsRecord
-		if err := c.ShouldBindJSON(&record); err != nil {
+		var input models.Distributor
+		if err := c.ShouldBindJSON(&input); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
+		
+		orgID, _ := c.Get("orgID")
+		input.OrganizationID = uint(orgID.(float64))
 
-		if err := db.Create(&record).Error; err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to add rights record"})
+		if err := db.Create(&input).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-
-		c.JSON(http.StatusCreated, record)
+		c.JSON(http.StatusCreated, input)
 	}
 }
 
-func GetRightsRecords(db *gorm.DB) gin.HandlerFunc {
+func GetDistributors(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		prodID := c.Param("productionId")
-		var records []models.RightsRecord
-		db.Where("production_id = ?", prodID).Find(&records)
-		c.JSON(http.StatusOK, records)
+		orgID, _ := c.Get("orgID")
+		var dists []models.Distributor
+		db.Where("organization_id = ?", uint(orgID.(float64))).Find(&dists)
+		c.JSON(http.StatusOK, dists)
 	}
 }
 
-func GetProfitabilityReport(db *gorm.DB) gin.HandlerFunc {
+func CreateDistributionAgreement(db *gorm.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		prodID, _ := strconv.ParseUint(c.Param("productionId"), 10, 32)
+		var input models.DistributionAgreement
+		if err := c.ShouldBindJSON(&input); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		input.ProductionID = uint(prodID)
+
+		if err := db.Create(&input).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusCreated, input)
+	}
+}
+
+func GetDistributionAgreements(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		prodID := c.Param("productionId")
+		var agreements []models.DistributionAgreement
+		db.Where("production_id = ?", prodID).Find(&agreements)
+		c.JSON(http.StatusOK, agreements)
+	}
+}
+
+func LogRevenue(db *gorm.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var input models.RevenueEntry
+		if err := c.ShouldBindJSON(&input); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
 		
-		var budgetItems []models.BudgetItem
-		db.Where("production_id = ?", prodID).Find(&budgetItems)
+		if err := db.Create(&input).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusCreated, input)
+	}
+}
 
-		var rightsRecords []models.RightsRecord
-		db.Where("production_id = ?", prodID).Find(&rightsRecords)
-
-		report := services.ComputeProfitability(budgetItems, rightsRecords)
-		c.JSON(http.StatusOK, report)
+func GetRevenueEntries(db *gorm.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		agreementID := c.Param("agreementId")
+		var entries []models.RevenueEntry
+		db.Where("distribution_agreement_id = ?", agreementID).Find(&entries)
+		c.JSON(http.StatusOK, entries)
 	}
 }

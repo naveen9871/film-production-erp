@@ -16,6 +16,8 @@ func CreateProduction(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
+		orgID, _ := c.Get("orgID")
+		p.OrganizationID = uint(orgID.(float64)) // JWT numbers parse as float64
 		p.Status = "Planning"
 		if err := db.Create(&p).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create production"})
@@ -28,17 +30,19 @@ func CreateProduction(db *gorm.DB) gin.HandlerFunc {
 
 func GetProductions(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		orgID, _ := c.Get("orgID")
 		var productions []models.Production
-		db.Find(&productions)
+		db.Where("organization_id = ?", uint(orgID.(float64))).Find(&productions)
 		c.JSON(http.StatusOK, productions)
 	}
 }
 
 func GetProduction(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		orgID, _ := c.Get("orgID")
 		id := c.Param("productionId")
 		var p models.Production
-		if err := db.First(&p, id).Error; err != nil {
+		if err := db.Where("organization_id = ?", uint(orgID.(float64))).First(&p, id).Error; err != nil {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Production not found"})
 			return
 		}

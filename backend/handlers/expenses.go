@@ -17,6 +17,19 @@ func AddExpense(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
+		// Validate PO if provided
+		if expense.POID != 0 {
+			var po models.PurchaseOrder
+			if err := db.First(&po, expense.POID).Error; err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid PO"})
+				return
+			}
+			if po.Status != "approved" {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "PO must be approved before logging expense"})
+				return
+			}
+		}
+
 		if err := db.Create(&expense).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to add expense"})
 			return
@@ -26,6 +39,10 @@ func AddExpense(db *gorm.DB) gin.HandlerFunc {
 		db.Model(&models.BudgetItem{}).Where("id = ?", expense.BudgetItemID).
 			UpdateColumn("actual_cost", gorm.Expr("actual_cost + ?", expense.Amount))
 
+		userID := c.GetUint("userID")
+		services.LogAudit(db, userID, "CREATE", "Expense", expense.ID, nil, expense, c.ClientIP())
+
+		services.GlobalBroker.Broadcast(expense.ProductionID, "expense_added", expense)
 		c.JSON(http.StatusCreated, expense)
 	}
 }
@@ -39,14 +56,3 @@ func GetExpenses(db *gorm.DB) gin.HandlerFunc {
 	}
 }
 
-func GetVarianceReport(db *gorm.DB) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		prodID := c.Param("productionId")
-		
-		var budgetItems []models.BudgetItem
-		db.Where("production_id = ?", prodID).Find(&budgetItems)
-
-		report := services.ComputeVariance(budgetItems)
-		c.JSON(http.StatusOK, report)
-	}
-}

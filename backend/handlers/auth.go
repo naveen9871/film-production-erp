@@ -38,14 +38,18 @@ func Login(db *gorm.DB) gin.HandlerFunc {
 		}
 
 		token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-			"sub":  user.ID,
-			"role": user.Role,
-			"exp":  time.Now().Add(time.Hour * 24).Unix(),
+			"sub":   user.ID,
+			"orgId": user.OrganizationID,
+			"role":  user.Role,
+			"exp":   time.Now().Add(time.Hour * 24).Unix(),
 		})
 
 		// Get secret from env
 		secret := os.Getenv("JWT_SECRET")
 		if secret == "" {
+			if os.Getenv("GIN_MODE") == "release" {
+				panic("JWT_SECRET environment variable is required in production")
+			}
 			secret = "super-secret-key-for-mvp"
 		}
 
@@ -58,9 +62,10 @@ func Login(db *gorm.DB) gin.HandlerFunc {
 		c.JSON(http.StatusOK, gin.H{
 			"token": tokenString,
 			"user": gin.H{
-				"id":       user.ID,
-				"username": user.Username,
-				"role":     user.Role,
+				"id":             user.ID,
+				"organizationId": user.OrganizationID,
+				"username":       user.Username,
+				"role":           user.Role,
 			},
 		})
 	}
