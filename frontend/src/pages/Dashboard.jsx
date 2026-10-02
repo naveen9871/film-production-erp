@@ -144,17 +144,15 @@ const Dashboard = ({ productionId }) => {
               <tbody>
                 {expenses.length > 0 ? expenses.slice(0, 5).map((exp, idx) => (
                   <tr key={idx}>
-                    <td><span className="row-icon">💸</span>{exp.description} — {exp.vendor}</td>
+                    <td><span className="row-icon">💸</span>{exp.description} {exp.vendor ? `— ${exp.vendor}` : ''}</td>
                     <td className="num">{formatINR(exp.amount)}</td>
                   </tr>
                 )) : (
-                  <>
-                    <tr><td><span className="row-icon">☕</span>Cafe Rental — Coffee Shop</td><td className="num">₹15,000</td></tr>
-                    <tr><td><span className="row-icon">🎥</span>Steadicam hire, 2 days</td><td className="num">₹2,40,000</td></tr>
-                    <tr><td><span className="row-icon">👗</span>Lead costume fitting</td><td className="num">₹68,500</td></tr>
-                    <tr><td><span className="row-icon">👥</span>Junior artists (40)</td><td className="num">₹3,20,000</td></tr>
-                    <tr><td><span className="row-icon">📍</span>Location permit — Marine Drive</td><td className="num">₹1,10,000</td></tr>
-                  </>
+                  <tr>
+                    <td colSpan="2" style={{ textAlign: 'center', padding: '24px', color: 'var(--text-faint)', fontSize: '13px' }}>
+                      No expenses logged yet
+                    </td>
+                  </tr>
                 )}
               </tbody>
             </table>

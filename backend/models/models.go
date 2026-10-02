@@ -45,6 +45,13 @@ type Production struct {
 	BaseCurrency string         `json:"baseCurrency"` // e.g., INR, USD
 	TotalBudget  float64        `json:"totalBudget"`
 	Status       string         `json:"status"` // draft, in_production, completed
+
+	// Shoot-day prediction: model-estimated total shoot days from script-derived
+	// entity counts (see services.PredictShootDays), and the producer-adjusted
+	// figure used for actual scheduling. See /validation/shoot-day-model for
+	// the model's cross-validated accuracy.
+	PredictedShootDays float64 `json:"predictedShootDays"`
+	ActualShootDays    float64 `json:"actualShootDays"` // producer override / real schedule length
 }
 
 // Scene represents a parsed scene from a script

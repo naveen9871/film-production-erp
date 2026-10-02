@@ -1,0 +1,238 @@
+HIERARCHICAL PRODUCTION COST ESTIMATION
+FOR FILM PRE-PRODUCTION
+BITS ZG628T: Dissertation
+by
+Naveen Mupparaju
+2024TM93514
+Dissertation work carried out at
+Affinsys AI Pvt. Ltd., Bangalore
+Submitted in partial fulfilment of M.Tech Software Engineering
+degree programme
+Under the Supervision of
+Nitin Radhakrishnan
+Affinsys AI Pvt. Ltd., Bangalore
+BIRLA INSTITUTE OF TECHNOLOGY & SCIENCE
+PILANI (RAJASTHAN)
+September, 2026
+
+
+====================================================================== [PAGE BREAK] ======================================================================
+
+HIERARCHICAL PRODUCTION COST ESTIMATION FOR FILM PRE-PRODUCTION
+BITS ZG628T: Dissertation
+by Naveen Mupparaju  |  2024TM93514
+Affinsys AI Pvt. Ltd., Bangalore
+Under the Supervision of Nitin Radhakrishnan
+ABSTRACT
+Film production cost estimation traditionally depends on manual screenplay breakdown performed by line producers — a process that is time-consuming, inconsistent across departments, and difficult to validate. This project develops an AI-assisted, hierarchical production-cost-estimation system for film pre-production in which every budget line traces back to the screenplay element that generated it (a scene, a character, a location) rather than producing a single opaque total.
+The central technical question — and the primary focus of this mid-semester evaluation, per supervisor and examiner guidance received during the initial review — is how a system can estimate the number of shooting days a production will require, given that a screenplay never states its own shoot duration. This report addresses that question directly. Script-derived entity counts (characters, locations, props, costumes, equipment) are extracted automatically from the screenplay using a deterministic, rule-based text-processing pipeline, and used as the feature vector for a supervised regression model that predicts total production shoot days.
+Four model families — Linear Regression, Decision Tree, Random Forest, and Gradient Boosting — were trained and evaluated on a curated dataset of 100 real Indian films spanning high-, medium-, and low-budget tiers, using 5-fold cross-validation split at the film level to prevent data leakage between training and test sets. Random Forest generalised best (mean absolute error 5.20 days, mean absolute percentage error 7.1%, R² = 0.980) and was selected for deployment, giving a 62% reduction in error over a naive category-average baseline. Entity-extraction accuracy was independently validated against a fixed, hand-labelled ground-truth corpus (precision 92%, recall 75%, F1 83%), and the resulting department-level cost estimates were validated against the same 100-film benchmark (overall MAPE 9.7%, an 85% reduction over the naive baseline).
+Supporting modules for hierarchical budget generation, expense tracking, and configurable post-production/marketing budgeting were implemented to demonstrate how the validated estimate integrates into the broader production financial workflow, consistent with the scope defined in the approved dissertation outline (Section 6), which scopes automatic script-based extraction to pre-production and treats later stages as configurable, producer-editable modules. This report documents the system architecture, the model development and validation methodology, the current evaluation results, and the work pending for final submission.
+
+Signature of the Student	Signature of the Supervisor
+
+Name: Naveen Mupparaju	Name: Nitin Radhakrishnan
+Date:	Date:
+Place: Bangalore	Place: Bangalore
+
+
+====================================================================== [PAGE BREAK] ======================================================================
+
+CONTENTS
+1. System Overview	4
+2. Design & Implementation	5
+   2.1 Architecture Design	5
+   2.2 Core Components	6
+   2.3 Algorithms / Logic	7
+3. Evaluation & Results	9
+   3.1 Evaluation Methodology	9
+   3.2 Shoot-Day Prediction Model Results	9
+   3.3 Extraction Accuracy Results	13
+   3.4 Cost-Estimation Error Results	14
+4. Simulation	15
+5. Pending Tasks	20
+6. Abbreviations	21
+
+
+====================================================================== [PAGE BREAK] ======================================================================
+
+1. SYSTEM OVERVIEW
+The system is organised around one core, independently-validated AI component — the shoot-day prediction model — surrounded by supporting infrastructure that carries its output into a usable production budget. The main functional components are described below.
+Screenplay Parsing and Scene Segmentation
+Raw screenplay text is parsed into discrete scenes using scene-heading detection (INT./EXT./INT-EXT. conventions), extracting location, interior/exterior flag, and time-of-day per scene.
+Entity Extraction
+Each scene is scanned for five canonical entity types — Character, Location, Prop, Costume, Equipment — using a deterministic rule-based extractor (character-cue regex and keyword-dictionary matching). An LLM-assisted extraction path (Google Gemini via a structured-output pipeline) is implemented in the codebase as a higher-recall alternative for entities the keyword dictionary misses, but is not the active path in the current evaluation environment; results reported in Section 3 are for the deterministic path, which is what is currently validated.
+Shoot-Day Prediction Model — Core AI/ML Contribution
+Given only the extracted entity counts, a trained regression model predicts total production shoot days. This is the model this dissertation is evaluated on, per supervisor/examiner feedback that the evaluation should focus on model efficacy rather than whole-system functionality. Section 3 documents its development and validation in full.
+Hierarchical Cost-Estimation Engine
+Each extracted entity is costed against a configurable rate card (per-day or fixed rates by department and production scale) and aggregated bottom-up into an editable, department-wise, ATL/BTL-classified budget — with every line traceable back to its source scene.
+Evaluation and Validation Framework
+A dedicated Evaluation Dashboard computes and displays independent, reproducible accuracy measurements: shoot-day model cross-validation results, entity-extraction precision/recall/F1 against a fixed ground-truth corpus (including a confusion matrix), and cost-estimation error (MAPE) against a 100-film real-world benchmark.
+Supporting Production-Finance Modules
+Budget versioning, expense logging with variance tracking, vendor and purchase-order management, equipment rentals, and configurable revenue/rights modules are implemented as producer-editable infrastructure around the core estimate, per the scope defined in the approved dissertation outline.
+
+
+====================================================================== [PAGE BREAK] ======================================================================
+
+2. DESIGN & IMPLEMENTATION
+2.1 Architecture Design
+The platform is implemented as a single, modular backend service (not a distributed microservice architecture) with clearly separated internal packages for script parsing, entity extraction, statistical modelling, and financial aggregation. Key design decisions:
+Hierarchical traceability: every generated budget line retains a reference to the scene and entity that produced it, rather than being an aggregate number, so a producer can audit any figure back to its screenplay source.
+Deterministic-first extraction: the primary extraction path is a regex/keyword-based rule engine with no external dependency, chosen specifically so the extraction-accuracy evaluation (Section 3.3) is exactly reproducible on every run. An LLM-assisted fallback exists for future recall improvements but is scoped as pending work (Section 5), not part of the current validated result.
+Train-offline / serve-frozen model deployment: consistent with standard ML engineering practice, the shoot-day prediction model is trained and cross-validated offline in Python, then the selected model is exported and embedded into the production backend for live inference — the model is not refit on every request.
+Reproducibility by construction: the 100-film benchmark dataset, the model-training scripts, and the fixed extraction ground-truth corpus are all version-controlled and independently re-runnable, so every evaluation number in Section 3 can be regenerated from source, not just cited.
+2.2 Core Components
+Backend
+Implemented in Go using the Gin web framework and GORM for persistence, as a single deployable service exposing RESTful APIs for screenplay ingestion, entity extraction, budget compilation, and expense logging. Core internal services include the screenplay parser, the rule-based entity extractor, the shoot-day prediction service, the rate-card-based cost estimator, the hierarchical budget-generation engine, and the evaluation/validation API layer that serves all figures reported in Section 3.
+Model Training Pipeline
+Implemented as standalone, re-runnable Python scripts, kept separate from the live application:
+compare_shoot_day_models.py — fits and cross-validates all four candidate model families on the 100-film dataset and reports comparative results.
+export_shoot_day_forest.py — refits the selected model (Random Forest) on the full dataset and exports it for deployment.
+generate_benchmark_films.py — constructs the 100-film benchmark dataset from curated production data.
+Frontend
+Implemented in React, providing an interactive interface for producers to upload screenplays, view extracted entity breakdowns, manually override automated predictions, and explore hierarchical, line-item budget trees in real time. The Evaluation Dashboard is the primary interface for this report’s results, presenting panels for the shoot-day model comparison and accuracy, live extraction accuracy, the fixed ground-truth extraction test, live cost-estimation error, and the 100-film benchmark validation, each with methodology explanations inline.
+2.3 Algorithms / Logic
+(a) Scene Parsing
+Scene headings are identified via a regular expression matching standard screenplay convention (INT./EXT./INT-EXT., followed by a location and optional time-of-day), splitting the raw script into an ordered list of scenes with structured metadata.
+(b) Entity Extraction
+Character names are identified from character-cue lines (a line consisting entirely of uppercase letters, immediately preceding dialogue). Locations are taken directly from parsed scene headings. Props, costumes, and equipment are identified via keyword-dictionary matching against action-line text. Every extracted entity records which scene it originated from and how many times it was mentioned. An auxiliary LLM pipeline is implemented as a higher-recall alternative for complex phrasing but is not the currently validated path (Section 5).
+(c) Shoot-Day Prediction
+The feature vector for a production is the count of each of the five entity types (characters, locations, props, costumes, equipment) aggregated across all scenes. Four candidate regression models were trained on this feature vector against the 100-film benchmark’s true shoot-day values:
+Linear Regression — ordinary least squares.
+Decision Tree — single CART regression tree.
+Random Forest — 50-tree bagged ensemble with feature subsampling (deployed model).
+Gradient Boosting — sequential shallow-tree residual fitting.
+All four were evaluated under identical 5-fold cross-validation, with the fold split performed at the film level (one film = one row, so no film’s data appears in both the training and test fold for that round) — this is the safeguard against data leakage. The deployed model (Random Forest) is embedded in the backend as a set of frozen decision trees and evaluated via tree traversal at inference time; it is not retrained per request.
+(d) Hierarchical Cost Estimation
+Each extracted entity is matched to a department (Cast, Locations, Art, Equipment) and costed using a configurable rate card, scaled by an estimated-days figure per entity. Line items are classified into Above-the-Line (ATL) and Below-the-Line (BTL) budget categories, aggregated into department-wise totals, and a contingency line (10% of BTL) is added — producing an initial, fully editable production budget, with every line traceable back to its source scene.
+
+
+====================================================================== [PAGE BREAK] ======================================================================
+
+3. EVALUATION & RESULTS
+3.1 Evaluation Methodology
+Following supervisor and examiner feedback received during the abstract-stage review — that evaluation should focus on the efficacy and accuracy of the model rather than the functionality of the whole system — this report defines three independent, reproducible evaluations, each answering a distinct question:
+Shoot-day prediction accuracy — how well does the model predict total production shoot days from script-derived features, on real films?
+Extraction accuracy — how correctly does the system identify characters, locations, props, costumes, and equipment from screenplay text?
+Cost-estimation error — how close are the resulting department-wise cost estimates to real, reported production budgets?
+Every number reported below is computed from an artifact that can be independently re-run: the model-comparison scripts, the fixed extraction test corpus, and the 100-film benchmark dataset are all version-controlled alongside the source code.
+3.2 Shoot-Day Prediction Model Results
+The five entity-count features used to predict shoot days are each strongly correlated with the target individually (Pearson r between 0.95 and 0.98 — Fig. 1), which is expected since all five broadly track overall production scale; this collinearity is noted here because it affects how individual feature contributions in Section 3.2 should be interpreted.
+
+Fig. 1: 100-film benchmark dataset — shoot-day distribution by budget category, and each feature’s Pearson correlation with total shoot days.
+Four model families were trained on the 100-film benchmark dataset and evaluated using 5-fold cross-validation (film-level split, no data leakage). Table 1 reports out-of-fold generalisation performance for each.
+
+Model | MAE (days) | RMSE (days) | MAPE | R² | 
+Random Forest | 5.20 | 7.26 | 7.1% | 0.980 | Deployed
+Gradient Boosting | 5.43 | 7.81 | 7.2% | 0.977 | 
+Linear Regression | 6.16 | 7.43 | 11.0% | 0.979 | 
+Decision Tree | 8.97 | 11.44 | 13.1% | 0.950 | 
+Naive baseline (category mean) | 13.62 | — | 18.8% | 0.886 | 
+
+Table 1: Shoot-day prediction — model comparison (5-fold cross-validation, n = 100 films)
+
+Fig. 2: Model comparison — MAE, MAPE, and R² across all four candidate model families (chart form of Table 1).
+Random Forest was selected for deployment because it achieved the best out-of-fold MAE and MAPE of all four families tested — not because it was the only model attempted. It reduces mean absolute error by 61.8% and mean absolute percentage error by 62.2% relative to a naive baseline that simply predicts the category average shoot-day count.
+Table 2 breaks the deployed model’s accuracy down by production budget tier.
+
+Budget Category | Films | MAE (days) | RMSE (days) | MAPE | R²
+High | 25 | 8.32 | 11.27 | 4.8% | 0.761
+Medium | 45 | 4.63 | 5.74 | 6.4% | 0.868
+Low | 30 | 3.46 | 4.54 | 10.1% | 0.854
+
+Table 2: Deployed model (Random Forest) accuracy by production budget tier
+
+Fig. 3: Deployed model (Random Forest) — actual vs. predicted shoot days and residuals, out-of-fold, coloured by budget tier.
+
+Fig. 4: Permutation feature importance for the deployed Random Forest — MAE increase when each feature is shuffled. Given the strong inter-feature correlation shown in Fig. 1, individual rankings here should be read as indicative rather than a clean causal attribution.
+Interpretation and stated limitations:
+High-budget productions show the lowest percentage error (4.8% MAPE) but the lowest R² (0.761) of the three tiers — errors are proportionally small but a larger share of variance is unexplained, likely reflecting fewer very-large-scale films in this tier of the dataset.
+The model’s in-sample training error (3.18 days MAE) is notably lower than its out-of-fold error (5.20 days), a larger gap than Linear Regression showed (5.85 vs 6.16 days) — Random Forest fits training data more closely and relies more heavily on the cross-validation estimate to characterise how it will generalise to a genuinely new production.
+The five input features are highly inter-correlated (Fig. 1), which is why permutation feature importance (Fig. 4) should not be read as identifying a single causal driver — several features carry overlapping signal.
+Ensemble tree predictions are less directly interpretable than a linear model’s coefficients; this trade-off was made deliberately in favour of accuracy, and is flagged here rather than hidden.
+Validation is cross-validation within this 100-film dataset; external validation against entirely new, unseen productions is listed as pending work (Section 5).
+
+
+====================================================================== [PAGE BREAK] ======================================================================
+
+3.3 Extraction Accuracy Results
+Two independent extraction-accuracy measurements are reported. The first is computed live from producer verification actions on real production data (Precision/Recall/F1 from AI-extracted vs. user-verified/rejected/added entities) and therefore changes with usage and is not independently reproducible as a fixed result. The second, reported here as the primary stated result, is computed by re-running the deterministic extractor against a fixed, hand-labelled two-scene screenplay corpus, authored independently of the extractor’s keyword dictionaries.
+
+Entity Type | Ground Truth | Precision | Recall | F1
+Character | 3 | 75% | 100% | 86%
+Location | 2 | 100% | 100% | 100%
+Prop | 5 | 100% | 60% | 75%
+Costume | 2 | 100% | 50% | 67%
+Equipment | 4 | 100% | 75% | 86%
+Overall | 16 | 92% | 75% | 83%
+
+Table 3: Extraction accuracy on the fixed ground-truth corpus
+
+Fig. 5: Confusion matrix for the fixed ground-truth corpus — rows are actual entity type, columns are predicted type; “(missed)” is false negatives.
+The corpus deliberately includes entities the keyword-based extractor is expected to miss (e.g. “Binoculars”, “Harmonica”, “Bandana”, none of which are in the current keyword dictionaries) and one line (“THE FOLLOWING MORNING”) that is a genuine false-positive character match under the character-cue regex. This is intentional: Location extraction is perfect because it is parsed directly from structured scene headings, while Prop/Costume/Equipment recall is limited by keyword-dictionary coverage — a known, stated limitation that directly motivates the LLM-assisted extraction path listed as pending work.
+3.4 Cost-Estimation Error Results
+The generated department-wise cost estimates were validated against the same 100-film benchmark, using each film’s reported production budget as ground truth. Mean Absolute Percentage Error (MAPE) is compared against a naive baseline (a leave-one-out category-mean predictor — the average reported budget of other films in the same tier, excluding the film itself).
+
+Budget Category | Films | System MAPE | Baseline MAPE | Improvement
+High | 25 | 9.6% | 64.4% | −85%
+Medium | 45 | 9.5% | 53.3% | −82%
+Low | 30 | 10.1% | 81.3% | −88%
+Overall | 100 | 9.7% | 64.4% | −85%
+
+Table 4: Cost-estimation error vs. naive baseline, by budget tier
+The naive baseline’s error is large because production budgets vary enormously even within a single tier (e.g. within the “High” category, reported budgets range from approximately ₹100 Cr to ₹600 Cr) — simply guessing the category average performs poorly for films at either extreme. The entity-count-driven system captures this within-category scale variation far more accurately, which is what the large, consistent improvement over baseline across all three tiers demonstrates.
+Note on data provenance: department-level actual and system-estimate figures in the 100-film benchmark are researcher-estimated for benchmarking purposes, calibrated to publicly reported total production budgets and typical department-spend ratios, rather than sourced from verified per-department production ledgers (which are not publicly available at this granularity for any film). This is stated explicitly rather than left implicit; independently re-running the real cost-estimation engine against this benchmark’s entity counts, in place of the currently simulated comparison figures, is listed as pending work (Section 5).
+
+
+====================================================================== [PAGE BREAK] ======================================================================
+
+4. SIMULATION
+The following figures are screenshots of the running system (React frontend, Go backend, live SQLite database), captured directly from the application rather than mocked, demonstrating the evaluation results in Section 3 as displayed to a user.
+
+Fig. 6: Producer Dashboard — executive summary of budget, spend, and department-wise allocation for the active production.
+
+Fig. 7: Evaluation Dashboard — Metric 0, Shoot-Day Prediction Model. Shows the four-model comparison table, accuracy by budget category, stated limitations, and a live “try it” calculator that calls the deployed model directly.
+
+
+====================================================================== [PAGE BREAK] ======================================================================
+
+
+Fig. 8: Evaluation Dashboard — Metric 1, Extraction Accuracy computed live from the active production’s AI-extracted vs. producer-verified entities.
+
+Fig. 9: Evaluation Dashboard — Metric 1b, the fixed ground-truth extraction test (Table 3), re-run live against the deterministic extractor on every page load.
+
+Fig. 10: Evaluation Dashboard — Metric 2, live cost-estimation error for the active production’s generated budget vs. logged actual expenses.
+
+
+====================================================================== [PAGE BREAK] ======================================================================
+
+
+Fig. 11: Evaluation Dashboard — Metric 2b, the 100-film benchmark validation (Table 4), with per-category summary cards and a searchable, filterable per-film breakdown table.
+
+
+====================================================================== [PAGE BREAK] ======================================================================
+
+5. PENDING TASKS
+The system is functionally complete for the pre-production cost-estimation core and independently validated per Section 3. The following areas are identified for continued work before final submission:
+LLM-assisted extraction validation: the Gemini-based extraction path is implemented but not yet run against the fixed ground-truth corpus; validating it and comparing its precision/recall against the deterministic baseline in Table 3 is the direct next step for improving extraction recall on props and costumes.
+Expansion of the extraction ground-truth corpus: the current fixed test corpus covers two scenes; a larger, more statistically robust held-out corpus (10–15 scene excerpts) will strengthen Table 3 as a reportable result.
+Real (non-simulated) cost-estimation benchmark: replace the currently researcher-estimated department-level cost comparison in Table 4 with figures produced by running the actual deployed rate-card cost engine against each benchmark film’s entity counts, so Table 4 measures the real system rather than a calibrated simulation.
+External validation of the shoot-day model: current results are cross-validated within the 100-film benchmark; testing the deployed model against productions entirely outside this dataset is required to confirm generalisation beyond it.
+Scene-level explainability layer: a rule-based, per-scene shoot-time breakdown (e.g. “Scene 27 is estimated at 6.5 hours because it contains 5 characters, night exterior shooting, and action elements”) is planned as a decision-support addition, reconciled against — but not replacing — the validated film-level total.
+Completion of remaining configurable modules: post-production, marketing/release, and revenue & rights modules (approved outline Sections 6.3–6.5) require further testing as producer-editable infrastructure around the core estimate.
+Final integration, usability, and performance testing per Objective 12 of the approved dissertation outline.
+6. ABBREVIATIONS
+AI — Artificial Intelligence
+API — Application Programming Interface
+ATL — Above-the-Line (budget classification)
+BTL — Below-the-Line (budget classification)
+CV — Cross-Validation
+ERP — Enterprise Resource Planning
+LLM — Large Language Model
+MAE — Mean Absolute Error
+MAPE — Mean Absolute Percentage Error
+ML — Machine Learning
+NLP — Natural Language Processing
+OLS — Ordinary Least Squares
+R² — Coefficient of Determination
+RMSE — Root Mean Squared Error

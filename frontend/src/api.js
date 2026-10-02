@@ -104,3 +104,20 @@ export const addFXRate = (data) => api.post('/fx-rates', data);
 // Audit Log
 export const fetchAuditLog = (id) => api.get(`/productions/${id}/audit`);
 export const fetchEntityAuditLog = (entityType, entityId) => api.get(`/audit/${entityType}/${entityId}`);
+
+// Re-run shoot-day prediction + budget generation from current (edited) entities
+export const recalculatePrediction = (id) => api.post(`/productions/${id}/recalculate`);
+
+// Evaluation Metrics (Precision/Recall/F1 + MAPE)
+export const fetchEvaluationMetrics = (id) => api.get(`/productions/${id}/evaluate`);
+// Fixed ground-truth extraction test set (reproducible, not tied to a production)
+export const fetchExtractionTestSet = () => api.get('/validation/extraction-test-set');
+// Shoot-day prediction model — cross-validated accuracy (core AI/ML contribution)
+export const fetchShootDayModel = () => api.get('/validation/shoot-day-model');
+// Ad-hoc prediction against the deployed model (Evaluation Dashboard "try it" calculator)
+export const predictShootDaysAdHoc = (params) => api.get('/validation/predict-shoot-days', { params });
+
+// Ablation study: with vs without fuzzy-string deduplication
+export const fetchAblationReport = () => api.get('/validation/ablation-report');
+// Confusion matrix: predicted-vs-actual per entity on ground-truth corpus
+export const fetchConfusionMatrix = () => api.get('/validation/confusion-matrix');

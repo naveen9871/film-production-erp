@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { fetchEntities, updateEntity } from '../api';
+import { fetchEntities, updateEntity, recalculatePrediction } from '../api';
 
 const SceneBuilder = ({ productionId }) => {
   const [activeTab, setActiveTab] = useState('characters');
   const [entities, setEntities] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [recalculating, setRecalculating] = useState(false);
+  const [recalcResult, setRecalcResult] = useState(null);
 
   useEffect(() => {
     if (productionId) {
@@ -32,6 +34,19 @@ const SceneBuilder = ({ productionId }) => {
     }
   };
 
+  const handleRecalculate = async () => {
+    setRecalculating(true);
+    setRecalcResult(null);
+    try {
+      const res = await recalculatePrediction(productionId);
+      setRecalcResult(res.data);
+    } catch (err) {
+      console.error(err);
+      setRecalcResult({ error: 'Recalculation failed — check the console.' });
+    }
+    setRecalculating(false);
+  };
+
   const typeMap = {
     'characters': 'Character',
     'props': 'Prop',
@@ -50,9 +65,36 @@ const SceneBuilder = ({ productionId }) => {
       <div className="page-head">
         <div>
           <div className="page-title">Scene Builder</div>
-          <div className="page-sub">Review and edit entities extracted from script.txt, grouped by type</div>
+          <div className="page-sub">Review AI-extracted entities — verify correct ones and add any missed to drive Evaluation accuracy scores</div>
         </div>
-        <button className="btn primary">+ Add Entity</button>
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          {recalcResult && !recalcResult.error && (
+            <span className="hint" style={{ fontSize: '12px' }}>
+              Updated: {recalcResult.predictedShootDays} predicted days, {recalcResult.budgetItems} budget items
+            </span>
+          )}
+          {recalcResult && recalcResult.error && (
+            <span className="hint" style={{ fontSize: '12px', color: 'var(--danger)' }}>{recalcResult.error}</span>
+          )}
+          <button className="btn" onClick={handleRecalculate} disabled={recalculating} title="Re-run shoot-day prediction and budget generation from the current entity list, after edits">
+            {recalculating ? 'Recalculating…' : 'Recalculate Days & Cost'}
+          </button>
+          <button className="btn primary">+ Add Entity</button>
+        </div>
+      </div>
+
+      {/* Evaluation guidance banner */}
+      <div style={{
+        background: '#EEF0FC', border: '1px solid #C7CCF5', borderRadius: 'var(--radius)',
+        padding: '12px 18px', marginBottom: '20px', fontSize: '13px', color: '#4A55C0',
+        display: 'flex', gap: '10px', alignItems: 'center'
+      }}>
+        <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" stroke="#4A55C0" style={{width:'16px',height:'16px',flexShrink:0}}><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+        <span>
+          <b>Evaluation Data:</b> Tick the <b>Verify</b> checkbox for each correctly extracted entity (AI right = TP).
+          If the AI missed something, click <b>+ Add Entity</b> to add it manually (AI miss = FN).
+          Un-verified AI entities count as FP. These choices drive the <b>Precision / Recall / F1</b> scores on the Evaluation Dashboard.
+        </span>
       </div>
 
       <div className="sb-launcher">

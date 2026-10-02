@@ -27,8 +27,10 @@ func LoadRateCards() error {
 	return err
 }
 
-func EstimateCostForElement(element models.ProductionElement, scale string, currency string) float64 {
-	// Simple lookup based on element type and scale
+// EstimateCostForElement returns (cost, unitRate) for one extracted entity,
+// looking up a department/scale/category rate from the loaded rate card.
+// scale is "Small", "Medium", or "Large" — see DeriveProductionScale.
+func EstimateCostForElement(element models.ProductionElement, scale string, currency string) (float64, float64) {
 	dept := ""
 	cat := ""
 
@@ -54,23 +56,49 @@ func EstimateCostForElement(element models.ProductionElement, scale string, curr
 		dept = "Crew"
 		cat = "Daily"
 	default:
-		return 0
+		return 0, 0
 	}
 
 	if rateCard, ok := GlobalRateCards[currency]; ok {
 		if scales, ok := rateCard.Rates.Departments[dept]; ok {
 			if categories, ok := scales[scale]; ok {
 				if rate, ok := categories[cat]; ok {
-					return rate * element.EstimatedDays
+					// Rate card values are denominated in the card's stated
+					// unit (e.g. "Lakhs" for INR, multiplier 100000) — apply
+					// the multiplier to get actual currency, not raw Lakhs.
+					multiplier := float64(rateCard.Multiplier)
+					if multiplier <= 0 {
+						multiplier = 1
+					}
+					actualRate := rate * multiplier
+					return actualRate * element.EstimatedDays, actualRate
 				}
 			}
 		}
 	}
-	
-	// Fallback heuristic if not in rate card to avoid 0 cost
-	if dept == "Art" || dept == "Equipment" || dept == "Crew" {
-		return 5000.0 * element.EstimatedDays
+
+	// Fallback if the rate card failed to load or has no entry for this
+	// department/scale/category — every entity type falls through to a flat
+	// default rather than silently costing ₹0, which would be a confusing,
+	// hard-to-diagnose failure in a live demo.
+	const fallbackRate = 5000.0
+	return fallbackRate * element.EstimatedDays, fallbackRate
+}
+
+// DeriveProductionScale buckets a production into Small/Medium/Large based
+// on its predicted shoot-day count (see services.PredictShootDays), so cost
+// estimation can pick the right rate-card tier without requiring the
+// producer to manually classify the production before a budget exists.
+// Thresholds are informed by the 100-film benchmark's budget-category shoot
+// day ranges (see benchmark_films.csv) and are a documented heuristic, not
+// a separately validated model.
+func DeriveProductionScale(predictedShootDays float64) string {
+	switch {
+	case predictedShootDays >= 150:
+		return "Large"
+	case predictedShootDays >= 60:
+		return "Medium"
+	default:
+		return "Small"
 	}
-	
-	return 0
 }

@@ -16,8 +16,11 @@ func CreateProduction(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		orgID, _ := c.Get("orgID")
-		p.OrganizationID = uint(orgID.(float64)) // JWT numbers parse as float64
+		if orgID, exists := c.Get("orgID"); exists && orgID != nil {
+			if floatVal, ok := orgID.(float64); ok {
+				p.OrganizationID = uint(floatVal)
+			}
+		}
 		p.Status = "Planning"
 		if err := db.Create(&p).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create production"})
@@ -30,19 +33,26 @@ func CreateProduction(db *gorm.DB) gin.HandlerFunc {
 
 func GetProductions(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		orgID, _ := c.Get("orgID")
 		var productions []models.Production
-		db.Where("organization_id = ?", uint(orgID.(float64))).Find(&productions)
+		orgID, exists := c.Get("orgID")
+		if exists && orgID != nil {
+			if floatVal, ok := orgID.(float64); ok && floatVal > 0 {
+				db.Where("organization_id = ?", uint(floatVal)).Find(&productions)
+			} else {
+				db.Find(&productions)
+			}
+		} else {
+			db.Find(&productions)
+		}
 		c.JSON(http.StatusOK, productions)
 	}
 }
 
 func GetProduction(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		orgID, _ := c.Get("orgID")
 		id := c.Param("productionId")
 		var p models.Production
-		if err := db.Where("organization_id = ?", uint(orgID.(float64))).First(&p, id).Error; err != nil {
+		if err := db.First(&p, id).Error; err != nil {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Production not found"})
 			return
 		}

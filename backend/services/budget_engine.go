@@ -1,7 +1,6 @@
 package services
 
 import (
-	"encoding/json"
 	"fmt"
 	"film-production-erp/models"
 	"gorm.io/gorm"
@@ -16,17 +15,12 @@ func GenerateQuote(db *gorm.DB, production *models.Production, elements []models
 		currency = "INR"
 	}
 
-	// Parse rate card config
-	var rcConfig map[string]interface{}
-	if rateCard != nil && rateCard.Config != "" {
-		json.Unmarshal([]byte(rateCard.Config), &rcConfig)
-	}
-
+	scale := DeriveProductionScale(production.PredictedShootDays)
 	btlTotal := 0.0
 
 	for _, el := range elements {
-		_, unitRate := EstimateCostForElementDB(el, currency, rcConfig)
-		
+		_, unitRate := EstimateCostForElement(el, scale, currency)
+
 		sourceScene := ""
 		if el.SceneID != 0 {
 			sourceScene = fmt.Sprintf("Scene ID: %d", el.SceneID)
@@ -97,18 +91,6 @@ func GenerateQuote(db *gorm.DB, production *models.Production, elements []models
 	}
 
 	return budget
-}
-
-// EstimateCostForElementDB calculates cost based on rate card JSON config
-func EstimateCostForElementDB(element models.ProductionElement, currency string, rcConfig map[string]interface{}) (float64, float64) {
-	// Simple fallback heuristic if rate card is missing
-	unitRate := 5000.0 // Default 5k
-
-	// In a real scenario, we'd traverse the parsed JSON rate card based on department/type
-	// For now, returning heuristic
-	
-	cost := unitRate * element.EstimatedDays
-	return cost, unitRate
 }
 
 // AllocateBudget mode: Top-down distribution of a fixed total budget
