@@ -10,8 +10,7 @@ const useSSE = (productionId, eventTypes = []) => {
     const token = localStorage.getItem('token');
     
     // We assume the backend expects the token in the query param for SSE since headers aren't supported
-    // Let's use the env var or default URL for API
-    const baseUrl = 'http://localhost:8080';
+    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
     const source = new EventSource(`${baseUrl}/events/${productionId}?token=${token}`);
 
     source.onopen = () => {

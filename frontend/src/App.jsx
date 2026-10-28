@@ -22,12 +22,8 @@ import Studio from './pages/Studio';
 import WritersRoom from './pages/WritersRoom';
 import Evaluation from './pages/Evaluation';
 
-// Demo scope toggle: hides nav items for modules that aren't part of the
-// validated pre-production cost-estimation core (Writer's Room, Schedule,
-// Artists, Equipment Rentals, Versions, Vendors, POs, Expenses, Revenue,
-// Reports, Settings). Routes stay registered and reachable by URL — this
-// only affects sidebar visibility. Flip to true to restore full nav.
-const SHOW_ALL_MODULES = false;
+// Full navigation enabled so modules like Expense Ledger, POs, Vendors, and Reports are visible in sidebar
+const SHOW_ALL_MODULES = true;
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -278,10 +274,17 @@ function App() {
     if (token) {
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));
-        setUser({ id: payload.sub, role: payload.role, username: payload.username || 'Producer' });
+        if (payload.exp && payload.exp * 1000 < Date.now()) {
+          console.warn("Token expired, clearing session");
+          localStorage.removeItem('token');
+          setUser(null);
+        } else {
+          setUser({ id: payload.sub, role: payload.role, username: payload.username || 'Producer' });
+        }
       } catch (e) {
         console.error("Invalid token", e);
         localStorage.removeItem('token');
+        setUser(null);
       }
     }
   }, []);

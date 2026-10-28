@@ -202,6 +202,21 @@ tbody tr:hover td{background:var(--surface-hover);}
 .badge.equip{background:var(--warning-soft);color:var(--warning);}
 .badge.signed{background:var(--success-soft);color:var(--success);}
 .badge.negotiating{background:var(--warning-soft);color:var(--warning);}
+.badge.info{background:var(--info-soft);color:var(--info);}
+.badge.danger{background:var(--danger-soft);color:var(--danger);}
+.badge.success{background:var(--success-soft);color:var(--success);}
+.badge.warning{background:var(--warning-soft);color:var(--warning);}
+.badge.muted{background:var(--surface-sunk);color:var(--text-dim);border:1px solid var(--border-soft);}
+
+.text-right{text-align:right;}
+.text-center{text-align:center;}
+.text-danger{color:var(--danger);}
+.text-success{color:var(--success);}
+.text-dim{color:var(--text-dim);}
+.text-faint{color:var(--text-faint);}
+.text-sm{font-size:12px;}
+.text-xs{font-size:10.5px;}
+
 .link-cell{color:var(--primary-strong);font-family:var(--font-mono);font-size:11px;font-weight:600;cursor:pointer;}
 .link-cell:hover{text-decoration:underline;}
 .pos{color:var(--success);font-weight:700;}

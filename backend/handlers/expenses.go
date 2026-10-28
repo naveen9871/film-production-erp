@@ -4,6 +4,7 @@ import (
 	"film-production-erp/models"
 	"film-production-erp/services"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -15,6 +16,20 @@ func AddExpense(db *gorm.DB) gin.HandlerFunc {
 		if err := c.ShouldBindJSON(&expense); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
+		}
+
+		if expense.ProductionID == 0 {
+			if pidStr := c.Param("productionId"); pidStr != "" {
+				if pid, err := strconv.ParseUint(pidStr, 10, 32); err == nil {
+					expense.ProductionID = uint(pid)
+				}
+			}
+		}
+		if expense.ProductionID == 0 && expense.BudgetItemID != 0 {
+			var bItem models.BudgetItem
+			if err := db.Select("production_id").First(&bItem, expense.BudgetItemID).Error; err == nil {
+				expense.ProductionID = bItem.ProductionID
+			}
 		}
 
 		// Validate PO if provided
