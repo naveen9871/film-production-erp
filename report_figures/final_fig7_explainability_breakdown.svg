@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 480" width="1100" height="480" style="background:#0F172A;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+    <text x="30" y="40" fill="#F8FAFC" font-size="20" font-weight="700">Fig. 7: Decision-Support Scene-Level Schedule &amp; Complexity Explainability</text>
+    <text x="30" y="65" fill="#94A3B8" font-size="13">Rule-based per-scene complexity breakdown reconciled against the Random Forest film-level shoot-day total</text>
+    
+    <g transform="translate(40, 95)">
+        <rect width="1020" height="350" rx="10" fill="#1E293B" stroke="#334155"/>
+        <rect x="0" y="0" width="1020" height="42" rx="10" fill="#243048"/>
+        <text x="25" y="26" fill="#94A3B8" font-size="12" font-weight="600">SCENE #</text>
+        <text x="110" y="26" fill="#94A3B8" font-size="12" font-weight="600">SLUGLINE &amp; LOCATION</text>
+        <text x="420" y="26" fill="#94A3B8" font-size="12" font-weight="600">EST. HOURS</text>
+        <text x="530" y="26" fill="#94A3B8" font-size="12" font-weight="600">RECONCILED DAYS</text>
+        <text x="690" y="26" fill="#94A3B8" font-size="12" font-weight="600">COMPLEXITY</text>
+        <text x="810" y="26" fill="#94A3B8" font-size="12" font-weight="600">KEY DRIVERS</text>
+        <line x1="20" y1="52" x2="1000" y2="52" stroke="#334155" stroke-width="1"/>
+        <text x="25" y="78" fill="#94A3B8" font-size="13" font-weight="700">Scene 1</text>
+        <text x="110" y="72" fill="#F8FAFC" font-size="13" font-weight="600">INT. WAREHOUSE - NIGHT</text>
+        <text x="110" y="88" fill="#64748B" font-size="11">Warehouse</text>
+        
+        <text x="420" y="78" fill="#F8FAFC" font-size="14" font-family="monospace">3.8 hrs</text>
+        <text x="530" y="78" fill="#A78BFA" font-size="14" font-family="monospace" font-weight="700">4.2 days</text>
+        
+        <rect x="690" y="64" width="65" height="22" rx="11" fill="#F59E0B22" stroke="#F59E0B"/>
+        <text x="722" y="79" fill="#F59E0B" font-size="12" font-weight="700" text-anchor="middle">7.8 / 10</text>
+        
+        <text x="810" y="72" fill="#CBD5E1" font-size="11">Night Interior (+35%)</text>
+        <text x="810" y="88" fill="#94A3B8" font-size="10">Action Stunt Sequence (+2.5 hrs), Multi-actor coverage</text>
+        
+        <line x1="20" y1="110" x2="1000" y2="110" stroke="#334155" stroke-width="1"/>
+        <text x="25" y="136" fill="#94A3B8" font-size="13" font-weight="700">Scene 2</text>
+        <text x="110" y="130" fill="#F8FAFC" font-size="13" font-weight="600">EXT. DOCKYARD - DAY</text>
+        <text x="110" y="146" fill="#64748B" font-size="11">Dockyard</text>
+        
+        <text x="420" y="136" fill="#F8FAFC" font-size="14" font-family="monospace">4.5 hrs</text>
+        <text x="530" y="136" fill="#A78BFA" font-size="14" font-family="monospace" font-weight="700">4.9 days</text>
+        
+        <rect x="690" y="122" width="65" height="22" rx="11" fill="#EF444422" stroke="#EF4444"/>
+        <text x="722" y="137" fill="#EF4444" font-size="12" font-weight="700" text-anchor="middle">8.2 / 10</text>
+        
+        <text x="810" y="130" fill="#CBD5E1" font-size="11">Exterior Location (+25%)</text>
+        <text x="810" y="146" fill="#94A3B8" font-size="10">Specialized Rigging (Crane/Drone), Heavy Equipment Setup</text>
+        
+        <line x1="20" y1="168" x2="1000" y2="168" stroke="#334155" stroke-width="1"/>
+        <text x="25" y="194" fill="#94A3B8" font-size="13" font-weight="700">Scene 3</text>
+        <text x="110" y="188" fill="#F8FAFC" font-size="13" font-weight="600">INT. POLICE STATION - DAY</text>
+        <text x="110" y="204" fill="#64748B" font-size="11">Police Station</text>
+        
+        <text x="420" y="194" fill="#F8FAFC" font-size="14" font-family="monospace">1.8 hrs</text>
+        <text x="530" y="194" fill="#A78BFA" font-size="14" font-family="monospace" font-weight="700">2.0 days</text>
+        
+        <rect x="690" y="180" width="65" height="22" rx="11" fill="#10B98122" stroke="#10B981"/>
+        <text x="722" y="195" fill="#10B981" font-size="12" font-weight="700" text-anchor="middle">4.2 / 10</text>
+        
+        <text x="810" y="188" fill="#CBD5E1" font-size="11">Controlled Interior</text>
+        <text x="810" y="204" fill="#94A3B8" font-size="10">Dialogue 2-Shot Coverage</text>
+        
+        <line x1="20" y1="226" x2="1000" y2="226" stroke="#334155" stroke-width="1"/>
+        <text x="25" y="252" fill="#94A3B8" font-size="13" font-weight="700">Scene 4</text>
+        <text x="110" y="246" fill="#F8FAFC" font-size="13" font-weight="600">EXT. HIGHWAY - NIGHT</text>
+        <text x="110" y="262" fill="#64748B" font-size="11">Highway</text>
+        
+        <text x="420" y="252" fill="#F8FAFC" font-size="14" font-family="monospace">5.2 hrs</text>
+        <text x="530" y="252" fill="#A78BFA" font-size="14" font-family="monospace" font-weight="700">5.8 days</text>
+        
+        <rect x="690" y="238" width="65" height="22" rx="11" fill="#EF444422" stroke="#EF4444"/>
+        <text x="722" y="253" fill="#EF4444" font-size="12" font-weight="700" text-anchor="middle">9.4 / 10</text>
+        
+        <text x="810" y="246" fill="#CBD5E1" font-size="11">Night Exterior (+35% + 25%)</text>
+        <text x="810" y="262" fill="#94A3B8" font-size="10">High-Speed Vehicle Stunt (+2.5 hrs), Gimbal Rigging</text>
+        
+        <line x1="20" y1="284" x2="1000" y2="284" stroke="#334155" stroke-width="1"/>
+        <text x="25" y="310" fill="#94A3B8" font-size="13" font-weight="700">Scene 5</text>
+        <text x="110" y="304" fill="#F8FAFC" font-size="13" font-weight="600">INT. TEMPLE COURTYARD - DAWN</text>
+        <text x="110" y="320" fill="#64748B" font-size="11">Temple Courtyard</text>
+        
+        <text x="420" y="310" fill="#F8FAFC" font-size="14" font-family="monospace">2.2 hrs</text>
+        <text x="530" y="310" fill="#A78BFA" font-size="14" font-family="monospace" font-weight="700">2.4 days</text>
+        
+        <rect x="690" y="296" width="65" height="22" rx="11" fill="#10B98122" stroke="#10B981"/>
+        <text x="722" y="311" fill="#10B981" font-size="12" font-weight="700" text-anchor="middle">5.0 / 10</text>
+        
+        <text x="810" y="304" fill="#CBD5E1" font-size="11">Dawn Controlled Staging</text>
+        <text x="810" y="320" fill="#94A3B8" font-size="10">Ensemble Background Coordination</text>
+        
+    </g>
+    </svg>

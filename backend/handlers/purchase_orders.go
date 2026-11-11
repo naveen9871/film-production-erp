@@ -62,7 +62,7 @@ func GetPO(db *gorm.DB) gin.HandlerFunc {
 			c.JSON(http.StatusNotFound, gin.H{"error": "PO not found"})
 			return
 		}
-		
+
 		orgID, _ := c.Get("orgID")
 		var prod models.Production
 		if err := db.First(&prod, po.ProductionID).Error; err != nil || prod.OrganizationID != uint(orgID.(float64)) {
@@ -84,7 +84,7 @@ func ApprovePO(db *gorm.DB) gin.HandlerFunc {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Not found"})
 			return
 		}
-		
+
 		orgID, _ := c.Get("orgID")
 		var prod models.Production
 		if err := db.First(&prod, po.ProductionID).Error; err != nil || prod.OrganizationID != uint(orgID.(float64)) {
@@ -119,7 +119,7 @@ func RejectPO(db *gorm.DB) gin.HandlerFunc {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Not found"})
 			return
 		}
-		
+
 		orgID, _ := c.Get("orgID")
 		var prod models.Production
 		if err := db.First(&prod, po.ProductionID).Error; err != nil || prod.OrganizationID != uint(orgID.(float64)) {
@@ -148,7 +148,7 @@ func ClosePO(db *gorm.DB) gin.HandlerFunc {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Not found"})
 			return
 		}
-		
+
 		orgID, _ := c.Get("orgID")
 		var prod models.Production
 		if err := db.First(&prod, po.ProductionID).Error; err != nil || prod.OrganizationID != uint(orgID.(float64)) {

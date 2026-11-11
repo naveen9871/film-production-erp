@@ -1,8 +1,8 @@
 package services
 
 import (
-	"encoding/json"
 	_ "embed"
+	"encoding/json"
 	"film-production-erp/models"
 	"sync"
 )
@@ -15,40 +15,34 @@ import (
 // cost driver (set rental days, equipment rental days, cast day-rates) is
 // computed from.
 //
-// Four model families were fit and compared offline on the 100-film
-// benchmark dataset (benchmark_films.csv) using 5-fold cross-validation —
-// see scripts/compare_shoot_day_models.py, a standalone, re-runnable
-// artifact producing exactly the numbers below:
+// Four model families were fit and compared offline on the 200-film
+// benchmark (benchmark_films.csv) using 5-fold cross-validation —
+// see scripts/compare_shoot_day_models.py:
 //
 //   Model               OOF MAE   RMSE     MAPE    R²
-//   Random Forest        5.20d    7.26d    7.1%    0.980   <- deployed
-//   Gradient Boosting     5.43d    7.81d    7.2%    0.977
-//   Linear Regression     6.16d    7.43d   11.0%    0.979
-//   Decision Tree         8.97d   11.44d   13.1%    0.950
-//   Naive category-mean  13.62d      —     18.8%    0.886   (baseline)
+//   Gradient Boosting   11.50d   15.97d   18.4%    0.894
+//   Random Forest       11.70d   16.49d   18.8%    0.887   <- deployed
+//   Linear Regression   12.43d   17.07d   21.3%    0.878
+//   Decision Tree       13.78d   17.82d   22.0%    0.867
+//   Naive category-mean 14.96d      —     24.5%    0.840   (baseline)
 //
-// Random Forest was selected for deployment because it had the best
-// out-of-fold (generalization) MAE/MAPE of all four families tested, not
-// because it was the only one tried — Linear Regression, a single Decision
-// Tree, and Gradient Boosting were all fit and evaluated on the identical
-// cross-validation folds; see scripts/compare_shoot_day_models.py for the
-// full comparison and scripts/export_shoot_day_forest.py for how the
-// deployed forest below was produced (bagging + feature subsampling, 50
-// trees, refit on all 100 films for deployment after model selection was
-// decided via cross-validation on held-out folds).
+// The forest embedded below was fit on the original 100 films, which is
+// where Random Forest won outright (MAE 5.20, R² 0.980). On the 200-film
+// set Gradient Boosting is 0.2 days ahead. The service keeps this forest:
+// the margin is small, and the holdout protocol (selection on 160 films)
+// still picks Random Forest. See scripts/export_shoot_day_forest.py.
 //
 // Known limitations (worth stating honestly rather than hiding):
-//   - Validated via cross-validation WITHIN this 100-film dataset; testing
-//     against entirely new, unseen productions is future work.
+//   - Final generalization is a stratified 40-film holdout plus a tier-shift
+//     test, from scripts/heldout_generalization.py. Entity counts are
+//     researcher-estimated, so that test stays inside this dataset.
 //   - Ensemble tree predictions are less directly interpretable than a
 //     linear model's coefficients — for producer-facing "why this number"
 //     explanations, see the scene-level heuristic breakdown layer, which is
 //     intentionally simple/interpretable rather than the most accurate.
-//   - Random Forest generalizes best in cross-validation, but the in-sample
-//     vs. out-of-fold MAE gap (3.18d train vs 5.20d OOF) is larger than
-//     Linear Regression's (5.85d vs 6.16d) — it fits training data more
-//     closely and relies more on the cross-validation estimate to know how
-//     well it will generalize to a new production.
+//   - On 200 films the forest's in-sample MAE is 8.62 days against an
+//     out-of-fold MAE of 11.70. Linear Regression's gap is smaller
+//     (11.69 vs 12.43).
 
 //go:embed shoot_day_forest.json
 var shootDayForestJSON []byte

@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 420" width="1100" height="420" style="background:#0F172A;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+    <text x="30" y="40" fill="#F8FAFC" font-size="20" font-weight="700">Fig. 4: Permutation Feature Importance for Deployed Random Forest Regressor</text>
+    <text x="30" y="65" fill="#94A3B8" font-size="13">Increase in Out-of-Fold MAE (days) when each feature column is randomly shuffled (N=200)</text>
+
+    <g transform="translate(60, 95)">
+        <rect width="980" height="280" rx="10" fill="#1E293B" stroke="#334155"/>
+        <text x="25" y="30" fill="#E2E8F0" font-size="14" font-weight="600">Feature Shuffling Impact on Shoot-Day Prediction Error</text>
+        <text x="35" y="78" fill="#F8FAFC" font-size="13" font-weight="600">Character Count</text>
+        <text x="230" y="78" fill="#94A3B8" font-size="12" font-family="monospace">(num_characters)</text>
+        <rect x="420" y="60" width="420" height="24" rx="4" fill="#334155"/>
+        <rect x="420" y="60" width="530.2" height="24" rx="4" fill="#8B5CF6"/>
+        <text x="960.2" y="77" fill="#8B5CF6" font-size="13" font-weight="700" font-family="monospace">+4.82 days MAE</text>
+        
+        <text x="35" y="120" fill="#F8FAFC" font-size="13" font-weight="600">Location Count</text>
+        <text x="230" y="120" fill="#94A3B8" font-size="12" font-family="monospace">(num_locations)</text>
+        <rect x="420" y="102" width="420" height="24" rx="4" fill="#334155"/>
+        <rect x="420" y="102" width="379.5" height="24" rx="4" fill="#6366F1"/>
+        <text x="809.5" y="119" fill="#6366F1" font-size="13" font-weight="700" font-family="monospace">+3.45 days MAE</text>
+        
+        <text x="35" y="162" fill="#F8FAFC" font-size="13" font-weight="600">Equipment Packages</text>
+        <text x="230" y="162" fill="#94A3B8" font-size="12" font-family="monospace">(num_equipment)</text>
+        <rect x="420" y="144" width="420" height="24" rx="4" fill="#334155"/>
+        <rect x="420" y="144" width="239.8" height="24" rx="4" fill="#3B82F6"/>
+        <text x="669.8" y="161" fill="#3B82F6" font-size="13" font-weight="700" font-family="monospace">+2.18 days MAE</text>
+        
+        <text x="35" y="204" fill="#F8FAFC" font-size="13" font-weight="600">Prop Count</text>
+        <text x="230" y="204" fill="#94A3B8" font-size="12" font-family="monospace">(num_props)</text>
+        <rect x="420" y="186" width="420" height="24" rx="4" fill="#334155"/>
+        <rect x="420" y="186" width="137.5" height="24" rx="4" fill="#10B981"/>
+        <text x="567.5" y="203" fill="#10B981" font-size="13" font-weight="700" font-family="monospace">+1.25 days MAE</text>
+        
+        <text x="35" y="246" fill="#F8FAFC" font-size="13" font-weight="600">Costume Count</text>
+        <text x="230" y="246" fill="#94A3B8" font-size="12" font-family="monospace">(num_costumes)</text>
+        <rect x="420" y="228" width="420" height="24" rx="4" fill="#334155"/>
+        <rect x="420" y="228" width="103.4" height="24" rx="4" fill="#F59E0B"/>
+        <text x="533.4" y="245" fill="#F59E0B" font-size="13" font-weight="700" font-family="monospace">+0.94 days MAE</text>
+        
+        <text x="35" y="260" fill="#94A3B8" font-size="11">Characters and locations represent the primary scheduling anchors; collinearity distributes marginal variance across props/costumes.</text>
+    </g>
+    </svg>

@@ -91,11 +91,11 @@ func (o *AIOrchestrator) RunExtractionPipeline(productionID uint, scenes []model
 		wg.Add(1)
 		go func(t struct{ name, prompt string }) {
 			defer wg.Done()
-			
+
 			// Acquire semaphore
 			sem <- struct{}{}
 			defer func() { <-sem }()
-			
+
 			fullPrompt := fmt.Sprintf(`You are a film production AI assistant. Analyze the following screenplay excerpt and extract the requested information. Be precise and comprehensive.
 			
 Screenplay:

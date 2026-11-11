@@ -19,7 +19,7 @@ func IssueFloat(db *gorm.DB) gin.HandlerFunc {
 
 		input.ProductionID = 0 // Will overwrite
 		db.Model(&models.Production{}).Where("id = ?", prodID).Select("id").Row().Scan(&input.ProductionID)
-		
+
 		input.Balance = input.Amount
 		input.Status = "Active"
 		input.IssuedByID = c.GetUint("userID")
@@ -84,7 +84,7 @@ func LogFloatReceipt(db *gorm.DB) gin.HandlerFunc {
 			if err := tx.Create(&input).Error; err != nil {
 				return err
 			}
-			
+
 			// Deduct balance
 			if err := tx.Model(&pcFloat).Update("balance", gorm.Expr("balance - ?", input.Amount)).Error; err != nil {
 				return err
@@ -104,7 +104,7 @@ func LogFloatReceipt(db *gorm.DB) gin.HandlerFunc {
 func ReconcileFloat(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		floatID := c.Param("id")
-		
+
 		err := db.Transaction(func(tx *gorm.DB) error {
 			var pcFloat models.PettyCashFloat
 			if err := tx.First(&pcFloat, floatID).Error; err != nil {
@@ -124,7 +124,7 @@ func ReconcileFloat(db *gorm.DB) gin.HandlerFunc {
 				expense := models.Expense{
 					ProductionID:    pcFloat.ProductionID,
 					BudgetItemID:    r.BudgetItemID,
-					VendorID:        0, 
+					VendorID:        0,
 					TransactionDate: r.TransactionDate,
 					Vendor:          r.Vendor,
 					Amount:          r.Amount,

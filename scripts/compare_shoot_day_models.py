@@ -1,7 +1,7 @@
 """
 Compares Linear Regression (the deployed model) against Random Forest and
 Gradient Boosting regressors for predicting total_shoot_days from
-script-derived entity counts, using the same 100-film benchmark dataset and
+script-derived entity counts, using benchmark_films.csv (200 films) and
 the SAME 5-fold cross-validation split as fit_shoot_days_model.py (same
 random.seed(42), same fold construction) so the results are directly
 comparable.
@@ -21,20 +21,25 @@ best (see the in-sample vs out-of-fold gap reported for each model).
 """
 import csv, os, random, math
 
-random.seed(42)
-
 FEATURES = ["num_characters", "num_locations", "num_props", "num_costumes", "num_equipment"]
 TARGET = "total_shoot_days"
 CSV_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "benchmark_films.csv")
 
+# Populated by main(). Kept at module scope because cross_validate reads them.
 rows = []
-with open(CSV_PATH) as f:
-    for r in csv.DictReader(f):
-        x = [float(r[c]) for c in FEATURES]  # no intercept column here; added inside OLS
-        y = float(r[TARGET])
-        rows.append((x, y, r["title"], r["budget_category"]))
+n = 0
+k = 5
+folds = []
 
-n = len(rows)
+
+def load_dataset(path=CSV_PATH):
+    loaded = []
+    with open(path) as f:
+        for r in csv.DictReader(f):
+            x = [float(r[c]) for c in FEATURES]  # no intercept column here; added inside OLS
+            y = float(r[TARGET])
+            loaded.append((x, y, r["title"], r["budget_category"]))
+    return loaded
 
 # ── Shared metrics ───────────────────────────────────────────────────────
 def metrics(y_true, y_pred):
@@ -48,15 +53,6 @@ def metrics(y_true, y_pred):
     ss_res = sum(e * e for e in errors)
     r2 = 1 - ss_res / ss_tot if ss_tot > 0 else 0
     return mae, rmse, mape, r2
-
-# ── Shared 5-fold split (identical to fit_shoot_days_model.py) ─────────────
-indices = list(range(n))
-random.shuffle(indices)
-k = 5
-fold_size = n // k
-folds = [indices[i*fold_size:(i+1)*fold_size] for i in range(k)]
-for i, idx in enumerate(indices[k*fold_size:]):
-    folds[i].append(idx)
 
 # ── Model 1: Linear Regression (OLS via normal equations) ──────────────────
 def transpose(X):
@@ -256,16 +252,52 @@ def cross_validate(model_factory, label):
 
     return m
 
-print(f"Dataset: {n} films, {len(FEATURES)} features, 5-fold CV (movie-level rows, seed=42)\n")
-print(f"{'Model':20s}  {'':6s}{'Out-of-fold (generalization) metrics':40s}   In-sample fit (overfit check)")
-print("-" * 110)
+def main():
+    global rows, n, folds, k
+    random.seed(42)
+    rows = load_dataset()
+    n = len(rows)
+    indices = list(range(n))
+    random.shuffle(indices)
+    k = 5
+    fold_size = n // k
+    folds = [indices[i * fold_size:(i + 1) * fold_size] for i in range(k)]
+    for i, idx in enumerate(indices[k * fold_size:]):
+        folds[i].append(idx)
 
-results = {}
-results["Linear Regression"] = cross_validate(LinearRegression, "Linear Regression")
-results["Decision Tree"] = cross_validate(lambda: DecisionTree(max_depth=3, min_samples_leaf=5), "Decision Tree")
-results["Random Forest"] = cross_validate(lambda: RandomForest(n_trees=50, max_depth=4, min_samples_leaf=3, max_features=3), "Random Forest")
-results["Gradient Boosting"] = cross_validate(lambda: GradientBoosting(n_estimators=50, learning_rate=0.1, max_depth=2, min_samples_leaf=5), "Gradient Boosting")
+    print(f"Dataset: {n} films, {len(FEATURES)} features, 5-fold CV (movie-level rows, seed=42)\n")
+    print(f"{'Model':20s}  {'':6s}{'Out-of-fold (generalization) metrics':40s}   In-sample fit (overfit check)")
+    print("-" * 110)
 
-print("\n=== Ranked by out-of-fold MAE (lower is better) ===")
-for name, m in sorted(results.items(), key=lambda kv: kv[1][0]):
-    print(f"{name:20s} MAE={m[0]:.2f}d  MAPE={m[2]:.1f}%  R2={m[3]:.3f}")
+    results = {}
+    results["Linear Regression"] = cross_validate(LinearRegression, "Linear Regression")
+    results["Decision Tree"] = cross_validate(lambda: DecisionTree(max_depth=3, min_samples_leaf=5), "Decision Tree")
+    results["Random Forest"] = cross_validate(lambda: RandomForest(n_trees=50, max_depth=4, min_samples_leaf=3, max_features=3), "Random Forest")
+    results["Gradient Boosting"] = cross_validate(lambda: GradientBoosting(n_estimators=50, learning_rate=0.1, max_depth=2, min_samples_leaf=5), "Gradient Boosting")
+
+    print("\n=== Ranked by out-of-fold MAE (lower is better) ===")
+    for name, m in sorted(results.items(), key=lambda kv: kv[1][0]):
+        print(f"{name:20s} MAE={m[0]:.2f}d  MAPE={m[2]:.1f}%  R2={m[3]:.3f}")
+
+    # Category-mean baseline on the same folds, so the dashboard can quote
+    # the improvement against the naive predictor.
+    base_true, base_pred = [], []
+    for fi in range(k):
+        test_idx = set(folds[fi])
+        train_rows = [rows[i] for i in range(n) if i not in test_idx]
+        test_rows = [rows[i] for i in range(n) if i in test_idx]
+        sums, counts = {}, {}
+        for r in train_rows:
+            sums[r[3]] = sums.get(r[3], 0.0) + r[1]
+            counts[r[3]] = counts.get(r[3], 0) + 1
+        for r in test_rows:
+            base_true.append(r[1])
+            base_pred.append(sums[r[3]] / counts[r[3]])
+    bm = metrics(base_true, base_pred)
+    rf = results["Random Forest"]
+    print(f"\nBaseline category-mean  MAE={bm[0]:.2f}d  MAPE={bm[2]:.1f}%  R2={bm[3]:.3f}")
+    print(f"RF vs baseline: {(bm[0]-rf[0])/bm[0]*100:.1f}% lower MAE, {(bm[2]-rf[2])/bm[2]*100:.1f}% lower MAPE")
+
+
+if __name__ == "__main__":
+    main()

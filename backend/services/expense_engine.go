@@ -5,10 +5,10 @@ import (
 )
 
 type VarianceReport struct {
-	Department     string  `json:"department"`
-	EstimatedCost  float64 `json:"estimatedCost"`
-	ActualCost     float64 `json:"actualCost"`
-	Variance       float64 `json:"variance"`
+	Department      string  `json:"department"`
+	EstimatedCost   float64 `json:"estimatedCost"`
+	ActualCost      float64 `json:"actualCost"`
+	Variance        float64 `json:"variance"`
 	VariancePercent float64 `json:"variancePercent"`
 }
 

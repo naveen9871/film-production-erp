@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 450" width="1100" height="450" style="background:#0F172A;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+    <text x="30" y="40" fill="#F8FAFC" font-size="20" font-weight="700">Fig. 2: Model Performance Comparison Across 4 Regressor Families (5-Fold CV, N=200)</text>
+    <text x="30" y="65" fill="#94A3B8" font-size="13">Out-of-fold generalization metrics on the expanded 200-film benchmark dataset (film-level cross-validation)</text>
+    
+    <!-- Table Header -->
+    <g transform="translate(40, 100)">
+        <rect width="1020" height="310" rx="10" fill="#1E293B" stroke="#334155"/>
+        <rect x="0" y="0" width="1020" height="45" rx="10" fill="#243048"/>
+        <text x="30" y="28" fill="#94A3B8" font-size="13" font-weight="600">CANDIDATE MODEL FAMILY</text>
+        <text x="320" y="28" fill="#94A3B8" font-size="13" font-weight="600">OUT-OF-FOLD MAE</text>
+        <text x="520" y="28" fill="#94A3B8" font-size="13" font-weight="600">OUT-OF-FOLD MAPE</text>
+        <text x="720" y="28" fill="#94A3B8" font-size="13" font-weight="600">R² SCORE</text>
+        <text x="890" y="28" fill="#94A3B8" font-size="13" font-weight="600">STATUS</text>
+    
+        <line x1="20" y1="50" x2="1000" y2="50" stroke="#334155" stroke-width="1"/>
+        <circle cx="35" cy="75" r="6" fill="#10B981"/>
+        <text x="55" y="80" fill="#F8FAFC" font-size="14" font-weight="600">Gradient Boosting</text>
+        
+        <!-- MAE Bar -->
+        <text x="320" y="80" fill="#F8FAFC" font-size="14" font-family="monospace" font-weight="700">11.50 days</text>
+        
+        <!-- MAPE Bar -->
+        <text x="520" y="80" fill="#F8FAFC" font-size="14" font-family="monospace" font-weight="700">18.4%</text>
+        
+        <!-- R2 Bar -->
+        <text x="720" y="80" fill="#F8FAFC" font-size="14" font-family="monospace" font-weight="700">0.894</text>
+        
+        <!-- Badge -->
+        <rect x="880" y="64" width="110" height="24" rx="12" fill="#10B98122" stroke="#10B981" stroke-width="1.5"/>
+        <text x="935" y="80" fill="#10B981" font-size="11" font-weight="700" text-anchor="middle">EVALUATED</text>
+        
+        <line x1="20" y1="100" x2="1000" y2="100" stroke="#334155" stroke-width="1"/>
+        <circle cx="35" cy="125" r="6" fill="#8B5CF6"/>
+        <text x="55" y="130" fill="#F8FAFC" font-size="14" font-weight="600">Random Forest (Dep)</text>
+        
+        <!-- MAE Bar -->
+        <text x="320" y="130" fill="#F8FAFC" font-size="14" font-family="monospace" font-weight="700">11.70 days</text>
+        
+        <!-- MAPE Bar -->
+        <text x="520" y="130" fill="#F8FAFC" font-size="14" font-family="monospace" font-weight="700">18.8%</text>
+        
+        <!-- R2 Bar -->
+        <text x="720" y="130" fill="#F8FAFC" font-size="14" font-family="monospace" font-weight="700">0.887</text>
+        
+        <!-- Badge -->
+        <rect x="880" y="114" width="110" height="24" rx="12" fill="#8B5CF622" stroke="#8B5CF6" stroke-width="1.5"/>
+        <text x="935" y="130" fill="#8B5CF6" font-size="11" font-weight="700" text-anchor="middle">DEPLOYED</text>
+        
+        <line x1="20" y1="150" x2="1000" y2="150" stroke="#334155" stroke-width="1"/>
+        <circle cx="35" cy="175" r="6" fill="#3B82F6"/>
+        <text x="55" y="180" fill="#F8FAFC" font-size="14" font-weight="600">Linear Regression</text>
+        
+        <!-- MAE Bar -->
+        <text x="320" y="180" fill="#F8FAFC" font-size="14" font-family="monospace" font-weight="700">12.43 days</text>
+        
+        <!-- MAPE Bar -->
+        <text x="520" y="180" fill="#F8FAFC" font-size="14" font-family="monospace" font-weight="700">21.3%</text>
+        
+        <!-- R2 Bar -->
+        <text x="720" y="180" fill="#F8FAFC" font-size="14" font-family="monospace" font-weight="700">0.878</text>
+        
+        <!-- Badge -->
+        <rect x="880" y="164" width="110" height="24" rx="12" fill="#3B82F622" stroke="#3B82F6" stroke-width="1.5"/>
+        <text x="935" y="180" fill="#3B82F6" font-size="11" font-weight="700" text-anchor="middle">EVALUATED</text>
+        
+        <line x1="20" y1="200" x2="1000" y2="200" stroke="#334155" stroke-width="1"/>
+        <circle cx="35" cy="225" r="6" fill="#F59E0B"/>
+        <text x="55" y="230" fill="#F8FAFC" font-size="14" font-weight="600">Decision Tree</text>
+        
+        <!-- MAE Bar -->
+        <text x="320" y="230" fill="#F8FAFC" font-size="14" font-family="monospace" font-weight="700">13.78 days</text>
+        
+        <!-- MAPE Bar -->
+        <text x="520" y="230" fill="#F8FAFC" font-size="14" font-family="monospace" font-weight="700">22.0%</text>
+        
+        <!-- R2 Bar -->
+        <text x="720" y="230" fill="#F8FAFC" font-size="14" font-family="monospace" font-weight="700">0.867</text>
+        
+        <!-- Badge -->
+        <rect x="880" y="214" width="110" height="24" rx="12" fill="#F59E0B22" stroke="#F59E0B" stroke-width="1.5"/>
+        <text x="935" y="230" fill="#F59E0B" font-size="11" font-weight="700" text-anchor="middle">EVALUATED</text>
+        
+        <line x1="20" y1="250" x2="1000" y2="250" stroke="#334155" stroke-width="1"/>
+        <circle cx="35" cy="275" r="6" fill="#EF4444"/>
+        <text x="55" y="280" fill="#F8FAFC" font-size="14" font-weight="600">Baseline (Cat-Mean)</text>
+        
+        <!-- MAE Bar -->
+        <text x="320" y="280" fill="#F8FAFC" font-size="14" font-family="monospace" font-weight="700">14.96 days</text>
+        
+        <!-- MAPE Bar -->
+        <text x="520" y="280" fill="#F8FAFC" font-size="14" font-family="monospace" font-weight="700">24.5%</text>
+        
+        <!-- R2 Bar -->
+        <text x="720" y="280" fill="#F8FAFC" font-size="14" font-family="monospace" font-weight="700">0.840</text>
+        
+        <!-- Badge -->
+        <rect x="880" y="264" width="110" height="24" rx="12" fill="#EF444422" stroke="#EF4444" stroke-width="1.5"/>
+        <text x="935" y="280" fill="#EF4444" font-size="11" font-weight="700" text-anchor="middle">BASELINE</text>
+        
+    </g>
+    </svg>

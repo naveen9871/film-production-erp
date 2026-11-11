@@ -19,6 +19,21 @@
           "Small": {"Camera": 0.5, "Lighting": 0.3, "Sound": 0.1},
           "Medium": {"Camera": 2.0, "Lighting": 1.0, "Sound": 0.5},
           "Large": {"Camera": 5.0, "Lighting": 2.5, "Sound": 1.0}
+        },
+        "Art": {
+          "Small": {"Prop": 0.05, "Costume": 0.1},
+          "Medium": {"Prop": 0.2, "Costume": 0.4},
+          "Large": {"Prop": 1.0, "Costume": 2.0}
+        },
+        "VFX": {
+          "Small": {"Package": 50, "PerShot": 0.5},
+          "Medium": {"Package": 400, "PerShot": 2.0},
+          "Large": {"Package": 3000, "PerShot": 10.0}
+        },
+        "Crew": {
+          "Small": {"Daily": 0.25},
+          "Medium": {"Daily": 1.0},
+          "Large": {"Daily": 3.0}
         }
       }
     },
@@ -63,6 +78,21 @@
           "Small": {"Camera": 1.0, "Lighting": 0.5, "Sound": 0.2},
           "Medium": {"Camera": 5.0, "Lighting": 2.5, "Sound": 1.0},
           "Large": {"Camera": 15.0, "Lighting": 7.5, "Sound": 2.5}
+        },
+        "Art": {
+          "Small": {"Prop": 0.2, "Costume": 0.5},
+          "Medium": {"Prop": 1.0, "Costume": 2.0},
+          "Large": {"Prop": 5.0, "Costume": 10.0}
+        },
+        "VFX": {
+          "Small": {"Package": 50, "PerShot": 1.0},
+          "Medium": {"Package": 500, "PerShot": 5.0},
+          "Large": {"Package": 5000, "PerShot": 25.0}
+        },
+        "Crew": {
+          "Small": {"Daily": 1.5},
+          "Medium": {"Daily": 5.0},
+          "Large": {"Daily": 15.0}
         }
       }
     },

@@ -47,8 +47,8 @@ func (c *AIClient) GenerateContent(prompt string) (string, error) {
 			},
 		},
 		"generationConfig": map[string]interface{}{
-			"temperature":     0.3,
-			"maxOutputTokens": 8192,
+			"temperature":      0.3,
+			"maxOutputTokens":  8192,
 			"responseMimeType": "application/json",
 		},
 	}

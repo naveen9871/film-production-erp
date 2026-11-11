@@ -1,8 +1,8 @@
 package services
 
 import (
-	"fmt"
 	"film-production-erp/models"
+	"fmt"
 	"gorm.io/gorm"
 )
 
@@ -18,8 +18,21 @@ func GenerateQuote(db *gorm.DB, production *models.Production, elements []models
 	scale := DeriveProductionScale(production.PredictedShootDays)
 	btlTotal := 0.0
 
-	for _, el := range elements {
+	var scenes []models.Scene
+	if db != nil {
+		db.Where("production_id = ?", production.ID).Order("id asc").Find(&scenes)
+	}
+	entityDays := EntityShootDays(scenes, elements, production.PredictedShootDays)
+
+	for i, el := range elements {
+		if entityDays != nil {
+			el.EstimatedDays = entityDays[i]
+			if el.Type == "Character" {
+				el.SubCategory = CastGrade(el.EstimatedDays, production.PredictedShootDays)
+			}
+		}
 		_, unitRate := EstimateCostForElement(el, scale, currency)
+		unit, qty := BillingUnit(el)
 
 		sourceScene := ""
 		if el.SceneID != 0 {
@@ -36,8 +49,8 @@ func GenerateQuote(db *gorm.DB, production *models.Production, elements []models
 			Category:       el.Type,
 			CostCategory:   el.SubCategory,
 			Description:    el.Name,
-			Unit:           "per_day",
-			Quantity:       el.EstimatedDays,
+			Unit:           unit,
+			Quantity:       qty,
 			UnitRate:       unitRate,
 		}
 
@@ -97,17 +110,17 @@ func GenerateQuote(db *gorm.DB, production *models.Production, elements []models
 func AllocateBudget(production *models.Production, rateCard *models.RateCard) []models.BudgetItem {
 	var budget []models.BudgetItem
 	total := production.TotalBudget
-	
+
 	currency := production.BaseCurrency
 	if currency == "" {
 		currency = "INR"
 	}
 
 	allocations := map[string]float64{
-		"PreProduction": 10.0,
-		"Production": 40.0,
+		"PreProduction":  10.0,
+		"Production":     40.0,
 		"PostProduction": 20.0,
-		"Marketing": 30.0,
+		"Marketing":      30.0,
 	}
 
 	for stage, percentage := range allocations {
@@ -125,4 +138,3 @@ func AllocateBudget(production *models.Production, rateCard *models.RateCard) []
 
 	return budget
 }
-

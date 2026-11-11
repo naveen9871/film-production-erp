@@ -11,13 +11,13 @@ import (
 func UpdateEntity(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
-		
+
 		var entity models.ProductionElement
 		if err := db.First(&entity, id).Error; err != nil {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Entity not found"})
 			return
 		}
-		
+
 		orgID, _ := c.Get("orgID")
 		var prod models.Production
 		if err := db.First(&prod, entity.ProductionID).Error; err != nil || prod.OrganizationID != uint(orgID.(float64)) {

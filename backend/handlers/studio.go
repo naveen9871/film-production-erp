@@ -18,7 +18,7 @@ func CreateStoryDocument(db *gorm.DB) gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-		
+
 		orgID, _ := c.Get("orgID")
 		input.OrganizationID = uint(orgID.(float64))
 		input.Status = "Draft"
@@ -87,7 +87,7 @@ func AddDocumentComment(db *gorm.DB) gin.HandlerFunc {
 
 		userID, _ := c.Get("userID")
 		input.AuthorID = uint(userID.(float64))
-		
+
 		// Fetch author name
 		var user models.User
 		db.First(&user, input.AuthorID)
@@ -131,16 +131,16 @@ func CommitToProduction(db *gorm.DB) gin.HandlerFunc {
 		// In a real implementation, we would extract the raw text from TipTap ContentJSON here.
 		// For MVP, we will assume ContentJSON holds raw plain text if we want, but let's mock it
 		rawText := "EXT. CITY - DAY\n\nAI generated script extracted from Studio." // Placeholder
-		
+
 		// Create new ScriptVersion
 		var lastVersion models.ScriptVersion
 		db.Where("production_id = ?", doc.ProductionID).Order("version desc").First(&lastVersion)
-		
+
 		newVersionNum := 1
 		if lastVersion.ID != 0 {
 			newVersionNum = lastVersion.Version + 1
 		}
-		
+
 		newVersion := models.ScriptVersion{
 			ProductionID: doc.ProductionID,
 			Version:      newVersionNum,
@@ -180,7 +180,7 @@ func CommitToProduction(db *gorm.DB) gin.HandlerFunc {
 func AISuggest(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req struct {
-			Action  string `json:"action"` // suggest_dialogue, analyze_genre, expand_scene, format_screenplay
+			Action  string `json:"action"`  // suggest_dialogue, analyze_genre, expand_scene, format_screenplay
 			Context string `json:"context"` // The text to analyze
 		}
 		if err := c.ShouldBindJSON(&req); err != nil {

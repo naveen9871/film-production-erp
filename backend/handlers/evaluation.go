@@ -1,8 +1,8 @@
 package handlers
 
 import (
-	"encoding/csv"
 	_ "embed"
+	"encoding/csv"
 	"film-production-erp/models"
 	"io"
 	"math"
@@ -42,8 +42,8 @@ type CostEstimationByDept struct {
 }
 
 // ─── Benchmark Film Structs ─────────────────────────────────────────────────
-// Sourced from benchmark_films.csv — 100 Indian films (25 High / 45 Medium /
-// 30 Low budget) with publicly reported actuals and rate-card system
+// Sourced from benchmark_films.csv — 200 Indian films (50 High / 90 Medium /
+// 60 Low budget) with publicly reported totals and rate-card system
 // estimates, used to validate cost-estimation error at scale rather than on
 // a handful of anecdotal examples.
 
@@ -77,14 +77,14 @@ type BenchmarkFilm struct {
 }
 
 type BenchmarkCategorySummary struct {
-	Category         string  `json:"category"` // High / Medium / Low
-	FilmCount        int     `json:"filmCount"`
-	AvgMAPE          float64 `json:"avgMape"`
-	StdDevMAPE       float64 `json:"stdDevMape"`
-	MinMAPE          float64 `json:"minMape"`
-	MaxMAPE          float64 `json:"maxMape"`
-	BaselineAvgMAPE  float64 `json:"baselineAvgMape"`  // naive category-mean predictor
-	ImprovementPct   float64 `json:"improvementPct"`   // how much lower system MAPE is vs. baseline
+	Category        string  `json:"category"` // High / Medium / Low
+	FilmCount       int     `json:"filmCount"`
+	AvgMAPE         float64 `json:"avgMape"`
+	StdDevMAPE      float64 `json:"stdDevMape"`
+	MinMAPE         float64 `json:"minMape"`
+	MaxMAPE         float64 `json:"maxMape"`
+	BaselineAvgMAPE float64 `json:"baselineAvgMape"` // naive category-mean predictor
+	ImprovementPct  float64 `json:"improvementPct"`  // how much lower system MAPE is vs. baseline
 }
 
 type EvaluationReport struct {
@@ -109,12 +109,12 @@ type EvaluationReport struct {
 	TotalVariancePct float64                `json:"totalVariancePct"`
 	HasActualData    bool                   `json:"hasActualData"`
 
-	// Benchmark Film Comparison (100-film real-world dataset)
-	BenchmarkFilms                []BenchmarkFilm            `json:"benchmarkFilms"`
-	BenchmarkByCategory           []BenchmarkCategorySummary `json:"benchmarkByCategory"`
-	BenchmarkOverallMAPE          float64                    `json:"benchmarkOverallMape"`
-	BenchmarkBaselineOverallMAPE  float64                    `json:"benchmarkBaselineOverallMape"`
-	BenchmarkFilmCount            int                        `json:"benchmarkFilmCount"`
+	// Benchmark Film Comparison (200-film dataset)
+	BenchmarkFilms               []BenchmarkFilm            `json:"benchmarkFilms"`
+	BenchmarkByCategory          []BenchmarkCategorySummary `json:"benchmarkByCategory"`
+	BenchmarkOverallMAPE         float64                    `json:"benchmarkOverallMape"`
+	BenchmarkBaselineOverallMAPE float64                    `json:"benchmarkBaselineOverallMape"`
+	BenchmarkFilmCount           int                        `json:"benchmarkFilmCount"`
 }
 
 func round2(val float64) float64 {
@@ -126,8 +126,8 @@ var (
 	benchmarkCache []BenchmarkFilm
 )
 
-// benchmarkFilms parses the embedded 100-film benchmark dataset
-// (benchmark_films.csv — 25 High / 45 Medium / 30 Low budget Indian films)
+// benchmarkFilms parses the embedded 200-film benchmark dataset
+// (benchmark_films.csv — 50 High / 90 Medium / 60 Low budget Indian films)
 // once and caches the result. Actual figures are publicly reported budgets;
 // estimated figures are what our rate-card system computes for a production
 // of equivalent scale and entity count, giving a cost-estimation-error
@@ -171,9 +171,9 @@ func parseBenchmarkCSV(raw string) []BenchmarkFilm {
 		}
 
 		deptDefs := []struct {
-			name        string
-			actualCol   string
-			estCol      string
+			name      string
+			actualCol string
+			estCol    string
 		}{
 			{"Cast (ATL)", "actual_cast_atl_cr", "system_est_cast_cr"},
 			{"VFX & Post", "actual_vfx_cr", "system_est_vfx_cr"},
@@ -198,8 +198,12 @@ func parseBenchmarkCSV(raw string) []BenchmarkFilm {
 			depts = append(depts, d)
 		}
 
-		mape := atof(rec, "dept_mape_pct")
-		if mapeCount > 0 && mape == 0 {
+		// A film estimated exactly right has a recorded MAPE of 0, so only a
+		// missing value falls back to the department average.
+		var mape float64
+		if i, ok := col["dept_mape_pct"]; ok && i < len(rec) && strings.TrimSpace(rec[i]) != "" {
+			mape = atof(rec, "dept_mape_pct")
+		} else if mapeCount > 0 {
 			mape = round2(mapeSum / float64(mapeCount))
 		}
 

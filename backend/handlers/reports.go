@@ -14,7 +14,7 @@ import (
 func GenerateBudgetPDF(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		prodID := c.Param("productionId")
-		
+
 		var prod models.Production
 		if err := db.First(&prod, prodID).Error; err != nil {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Production not found"})
@@ -28,7 +28,7 @@ func GenerateBudgetPDF(db *gorm.DB) gin.HandlerFunc {
 		pdf.AddPage()
 		pdf.SetFont("Arial", "B", 16)
 		pdf.CellFormat(190, 10, fmt.Sprintf("Budget Report: %s", prod.Title), "0", 1, "C", false, 0, "")
-		
+
 		pdf.SetFont("Arial", "", 12)
 		pdf.CellFormat(190, 10, fmt.Sprintf("Total Budget: %.2f Lakhs", prod.TotalBudget), "0", 1, "C", false, 0, "")
 
@@ -43,13 +43,13 @@ func GenerateBudgetPDF(db *gorm.DB) gin.HandlerFunc {
 		var totalEst, totalAct float64
 		for _, item := range items {
 			pdf.CellFormat(40, 10, item.Department, "1", 0, "L", false, 0, "")
-			
+
 			// Handle long description
 			desc := item.Description
 			if len(desc) > 30 {
 				desc = desc[:27] + "..."
 			}
-			
+
 			pdf.CellFormat(80, 10, desc, "1", 0, "L", false, 0, "")
 			pdf.CellFormat(40, 10, fmt.Sprintf("%.2f", item.EstimatedCost), "1", 0, "R", false, 0, "")
 			pdf.CellFormat(30, 10, fmt.Sprintf("%.2f", item.ActualCost), "1", 1, "R", false, 0, "")
@@ -68,7 +68,7 @@ func GenerateBudgetPDF(db *gorm.DB) gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate PDF"})
 			return
 		}
-		
+
 		defer os.Remove(filename)
 		c.FileAttachment(filename, fmt.Sprintf("Budget_Report_%s.pdf", prod.Title))
 		pdf.Output(c.Writer)
@@ -79,7 +79,7 @@ func GenerateBudgetPDF(db *gorm.DB) gin.HandlerFunc {
 func GetGSTITCReport(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		orgID, _ := c.Get("orgID")
-		
+
 		type ITCResult struct {
 			VendorName string  `json:"vendorName"`
 			GSTIN      string  `json:"gstin"`
@@ -89,7 +89,7 @@ func GetGSTITCReport(db *gorm.DB) gin.HandlerFunc {
 		}
 
 		var results []ITCResult
-		
+
 		// Query joining Expenses with Vendors (since expenses belong to a production, and production to an org)
 		err := db.Table("expenses").
 			Select("vendors.name as vendor_name, vendors.gst_number as gstin, expenses.tax_type as tax_type, sum(expenses.tax_amount) as total_tax, sum(expenses.amount) as total_value").
@@ -156,7 +156,7 @@ func GetDailyCostReport(db *gorm.DB) gin.HandlerFunc {
 			if _, exists := deptMap[dept]; !exists {
 				deptMap[dept] = &DCRDepartment{Department: dept}
 			}
-			
+
 			// Pro-rate daily cost
 			dailyCost := item.EstimatedCost
 			if item.Quantity > 0 {
@@ -189,11 +189,11 @@ func GetDailyCostReport(db *gorm.DB) gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusOK, gin.H{
-			"date": dateStr,
+			"date":           dateStr,
 			"totalEstimated": totalEst,
-			"totalActual": totalAct,
-			"totalVariance": totalEst - totalAct,
-			"departments": depts,
+			"totalActual":    totalAct,
+			"totalVariance":  totalEst - totalAct,
+			"departments":    depts,
 		})
 	}
 }

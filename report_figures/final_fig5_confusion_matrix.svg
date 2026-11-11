@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 480" width="1100" height="480" style="background:#0F172A;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+    <text x="30" y="40" fill="#F8FAFC" font-size="20" font-weight="700">Fig. 5: Confusion Matrix for Expanded 12-Scene Ground-Truth Screenplay Corpus</text>
+    <text x="30" y="65" fill="#94A3B8" font-size="13">Multi-genre benchmark (72 canonical entities hand-labeled across 12 scene excerpts; rows = true type, columns = predicted)</text>
+
+    <g transform="translate(80, 100)">
+        <rect width="940" height="340" rx="10" fill="#1E293B" stroke="#334155"/>
+        
+        <!-- Table Matrix Headers -->
+        <text x="180" y="35" fill="#94A3B8" font-size="12" font-weight="600" text-anchor="middle">Character</text>
+        <text x="280" y="35" fill="#94A3B8" font-size="12" font-weight="600" text-anchor="middle">Location</text>
+        <text x="380" y="35" fill="#94A3B8" font-size="12" font-weight="600" text-anchor="middle">Prop</text>
+        <text x="480" y="35" fill="#94A3B8" font-size="12" font-weight="600" text-anchor="middle">Costume</text>
+        <text x="580" y="35" fill="#94A3B8" font-size="12" font-weight="600" text-anchor="middle">Equipment</text>
+        <text x="690" y="35" fill="#EF4444" font-size="12" font-weight="700" text-anchor="middle">(Missed / FN)</text>
+        <text x="820" y="35" fill="#10B981" font-size="12" font-weight="700" text-anchor="middle">Recall (%)</text>
+        
+        <!-- Row 1: Character -->
+        <text x="40" y="85" fill="#F8FAFC" font-size="13" font-weight="600">Character (17)</text>
+        <rect x="150" y="60" width="60" height="36" fill="#10B981" rx="4"/>
+        <text x="180" y="83" fill="#FFF" font-weight="700" text-anchor="middle">15</text>
+        <text x="280" y="83" fill="#64748B" text-anchor="middle">0</text>
+        <text x="380" y="83" fill="#64748B" text-anchor="middle">0</text>
+        <text x="480" y="83" fill="#64748B" text-anchor="middle">0</text>
+        <text x="580" y="83" fill="#64748B" text-anchor="middle">0</text>
+        <rect x="660" y="60" width="60" height="36" fill="#EF444433" stroke="#EF4444" rx="4"/>
+        <text x="690" y="83" fill="#EF4444" font-weight="700" text-anchor="middle">2</text>
+        <text x="820" y="83" fill="#10B981" font-weight="700" text-anchor="middle">88.2%</text>
+
+        <!-- Row 2: Location -->
+        <text x="40" y="135" fill="#F8FAFC" font-size="13" font-weight="600">Location (12)</text>
+        <text x="180" y="133" fill="#64748B" text-anchor="middle">0</text>
+        <rect x="250" y="110" width="60" height="36" fill="#10B981" rx="4"/>
+        <text x="280" y="133" fill="#FFF" font-weight="700" text-anchor="middle">12</text>
+        <text x="380" y="133" fill="#64748B" text-anchor="middle">0</text>
+        <text x="480" y="133" fill="#64748B" text-anchor="middle">0</text>
+        <text x="580" y="133" fill="#64748B" text-anchor="middle">0</text>
+        <text x="690" y="133" fill="#64748B" text-anchor="middle">0</text>
+        <text x="820" y="133" fill="#10B981" font-weight="700" text-anchor="middle">100.0%</text>
+
+        <!-- Row 3: Prop -->
+        <text x="40" y="185" fill="#F8FAFC" font-size="13" font-weight="600">Prop (22)</text>
+        <text x="180" y="183" fill="#64748B" text-anchor="middle">0</text>
+        <text x="280" y="183" fill="#64748B" text-anchor="middle">0</text>
+        <rect x="350" y="160" width="60" height="36" fill="#10B981" rx="4"/>
+        <text x="380" y="183" fill="#FFF" font-weight="700" text-anchor="middle">17</text>
+        <text x="480" y="183" fill="#64748B" text-anchor="middle">0</text>
+        <text x="580" y="183" fill="#64748B" text-anchor="middle">0</text>
+        <rect x="660" y="160" width="60" height="36" fill="#EF444433" stroke="#EF4444" rx="4"/>
+        <text x="690" y="183" fill="#EF4444" font-weight="700" text-anchor="middle">5</text>
+        <text x="820" y="183" fill="#10B981" font-weight="700" text-anchor="middle">77.3%</text>
+
+        <!-- Row 4: Costume -->
+        <text x="40" y="235" fill="#F8FAFC" font-size="13" font-weight="600">Costume (11)</text>
+        <text x="180" y="233" fill="#64748B" text-anchor="middle">0</text>
+        <text x="280" y="233" fill="#64748B" text-anchor="middle">0</text>
+        <text x="380" y="233" fill="#64748B" text-anchor="middle">0</text>
+        <rect x="450" y="210" width="60" height="36" fill="#10B981" rx="4"/>
+        <text x="480" y="233" fill="#FFF" font-weight="700" text-anchor="middle">9</text>
+        <text x="580" y="233" fill="#64748B" text-anchor="middle">0</text>
+        <rect x="660" y="210" width="60" height="36" fill="#EF444433" stroke="#EF4444" rx="4"/>
+        <text x="690" y="233" fill="#EF4444" font-weight="700" text-anchor="middle">2</text>
+        <text x="820" y="233" fill="#10B981" font-weight="700" text-anchor="middle">81.8%</text>
+
+        <!-- Row 5: Equipment -->
+        <text x="40" y="285" fill="#F8FAFC" font-size="13" font-weight="600">Equipment (10)</text>
+        <text x="180" y="283" fill="#64748B" text-anchor="middle">0</text>
+        <text x="280" y="283" fill="#64748B" text-anchor="middle">0</text>
+        <text x="380" y="283" fill="#64748B" text-anchor="middle">0</text>
+        <text x="480" y="283" fill="#64748B" text-anchor="middle">0</text>
+        <rect x="550" y="260" width="60" height="36" fill="#10B981" rx="4"/>
+        <text x="580" y="283" fill="#FFF" font-weight="700" text-anchor="middle">9</text>
+        <rect x="660" y="260" width="60" height="36" fill="#EF444433" stroke="#EF4444" rx="4"/>
+        <text x="690" y="283" fill="#EF4444" font-weight="700" text-anchor="middle">1</text>
+        <text x="820" y="283" fill="#10B981" font-weight="700" text-anchor="middle">90.0%</text>
+    </g>
+    </svg>

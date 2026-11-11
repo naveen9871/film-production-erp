@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { fetchEvaluationMetrics, fetchExtractionTestSet, fetchShootDayModel, predictShootDaysAdHoc, fetchAblationReport, fetchConfusionMatrix } from '../api';
+import { fetchEvaluationMetrics, fetchExtractionTestSet, fetchShootDayModel, fetchHeldOutEvaluation, fetchCostCalibration, predictShootDaysAdHoc, fetchAblationReport, fetchConfusionMatrix } from '../api';
 import {
   Target, TrendingUp, TrendingDown, AlertTriangle, CheckCircle2,
   BarChart2, Loader2, RefreshCw, Info, Clock, Layers, GitBranch, Grid
@@ -149,6 +149,8 @@ const Evaluation = ({ productionId }) => {
   const [testSet, setTestSet] = useState(null);
   const [testSetLoading, setTestSetLoading] = useState(false);
   const [shootModel, setShootModel] = useState(null);
+  const [heldOut, setHeldOut] = useState(null);
+  const [calibration, setCalibration] = useState(null);
   const [ablation, setAblation] = useState(null);
   const [confMatrix, setConfMatrix] = useState(null);
   const [calc, setCalc] = useState({ characters: 20, locations: 15, props: 60, costumes: 40, equipment: 25 });
@@ -187,6 +189,20 @@ const Evaluation = ({ productionId }) => {
     } catch (err) { console.error(err); }
   };
 
+  const loadHeldOut = async () => {
+    try {
+      const res = await fetchHeldOutEvaluation();
+      setHeldOut(res.data);
+    } catch (err) { console.error(err); }
+  };
+
+  const loadCalibration = async () => {
+    try {
+      const res = await fetchCostCalibration();
+      setCalibration(res.data);
+    } catch (err) { console.error(err); }
+  };
+
   const loadAblation = async () => {
     try {
       const res = await fetchAblationReport();
@@ -201,7 +217,7 @@ const Evaluation = ({ productionId }) => {
     } catch (err) { console.error(err); }
   };
 
-  useEffect(() => { load(); loadTestSet(); loadShootModel(); loadAblation(); loadConfMatrix(); }, [productionId]);
+  useEffect(() => { load(); loadTestSet(); loadShootModel(); loadHeldOut(); loadCalibration(); loadAblation(); loadConfMatrix(); }, [productionId]);
 
   // Calls the actual deployed model (Random Forest) rather than re-implementing
   // tree traversal client-side, so this can never drift from what's deployed.
@@ -283,7 +299,7 @@ const Evaluation = ({ productionId }) => {
           <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Clock size={16} color="var(--primary)" /> Metric 0 — Shoot-Day Prediction Model
           </h3>
-          <span className="hint">Core AI/ML contribution · Random Forest (best of 4 compared) · 5-fold cross-validated on 100 films</span>
+          <span className="hint">Core AI/ML contribution · Random Forest deployed · 5-fold cross-validated on 200 films</span>
         </div>
         <div className="panel-body">
           <div style={{
@@ -416,6 +432,96 @@ const Evaluation = ({ productionId }) => {
                   <b>Known limitations (stated, not hidden):</b>
                   <ul style={{ margin: '8px 0 0', paddingLeft: '18px' }}>
                     {shootModel.limitations.map((l, i) => <li key={i} style={{ marginBottom: '4px' }}>{l}</li>)}
+                  </ul>
+                </div>
+              )}
+
+              {heldOut && (
+                <div style={{
+                  border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '16px 18px', marginBottom: '20px'
+                }}>
+                  <h4 style={{ margin: '0 0 8px', fontSize: '13px', letterSpacing: '.4px', textTransform: 'uppercase', color: 'var(--text-dim)' }}>
+                    Final — generalization on unseen films
+                  </h4>
+                  <p style={{ margin: '0 0 14px', fontSize: '13px', color: 'var(--text-dim)', lineHeight: 1.5 }}>
+                    {heldOut.methodology}
+                  </p>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '16px' }}>
+                    <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '12px' }}>
+                      <div style={{ fontSize: '11px', color: 'var(--text-faint)', fontWeight: 600 }}>HOLDOUT MAE</div>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 800, fontSize: '22px' }}>{heldOut.holdout.maeDays.toFixed(2)}d</div>
+                      <div style={{ fontSize: '11px', color: 'var(--text-faint)' }}>baseline {heldOut.baseline.maeDays.toFixed(2)}d · n={heldOut.testCount}</div>
+                    </div>
+                    <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '12px' }}>
+                      <div style={{ fontSize: '11px', color: 'var(--text-faint)', fontWeight: 600 }}>HOLDOUT MAPE</div>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 800, fontSize: '22px' }}>{heldOut.holdout.mapePct.toFixed(1)}%</div>
+                      <div style={{ fontSize: '11px', color: 'var(--text-faint)' }}>baseline {heldOut.baseline.mapePct.toFixed(1)}%</div>
+                    </div>
+                    <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '12px' }}>
+                      <div style={{ fontSize: '11px', color: 'var(--text-faint)', fontWeight: 600 }}>HOLDOUT R²</div>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 800, fontSize: '22px' }}>{heldOut.holdout.r2.toFixed(3)}</div>
+                      <div style={{ fontSize: '11px', color: 'var(--text-faint)' }}>{heldOut.selectedModel}</div>
+                    </div>
+                    <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '12px' }}>
+                      <div style={{ fontSize: '11px', color: 'var(--text-faint)', fontWeight: 600 }}>MAE VS BASELINE</div>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 800, fontSize: '22px', color: '#0E9F6E' }}>−{heldOut.improvementMaePct.toFixed(1)}%</div>
+                      <div style={{ fontSize: '11px', color: 'var(--text-faint)' }}>same-mix holdout only</div>
+                    </div>
+                  </div>
+
+                  <div style={{ fontSize: '12px', fontWeight: 700, marginBottom: '6px' }}>Selection redone on the {heldOut.trainCount} training films</div>
+                  <table style={{ marginBottom: '14px' }}>
+                    <thead>
+                      <tr>
+                        <th>Model</th><th className="num">CV MAE</th><th className="num">CV MAPE</th><th className="num">CV R²</th><th></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {heldOut.selectionOnTrain.map((m) => (
+                        <tr key={m.model} style={m.model === heldOut.selectedModel ? { background: 'var(--success-soft)' } : undefined}>
+                          <td>{m.model}</td>
+                          <td className="num mono">{m.maeDays.toFixed(2)}</td>
+                          <td className="num mono">{m.mapePct.toFixed(1)}%</td>
+                          <td className="num mono">{m.r2.toFixed(3)}</td>
+                          <td>{m.model === heldOut.selectedModel ? 'Selected' : ''}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+
+                  <div style={{ fontSize: '12px', fontWeight: 700, marginBottom: '6px' }}>
+                    Stricter check — train on two budget tiers, test on the tier left out
+                  </div>
+                  <table style={{ marginBottom: '12px' }}>
+                    <thead>
+                      <tr>
+                        <th>Trained on</th><th>Tested on</th><th className="num">Films</th>
+                        <th className="num">MAE</th><th className="num">MAPE</th><th className="num">R²</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {heldOut.tierShift.map((row) => (
+                        <tr key={row.testOn}>
+                          <td>{row.trainOn}</td>
+                          <td>{row.testOn}</td>
+                          <td className="num">{row.testCount}</td>
+                          <td className="num mono">{row.maeDays.toFixed(2)}</td>
+                          <td className="num mono">{row.mapePct.toFixed(1)}%</td>
+                          <td className="num mono" style={{ color: row.r2 < 0 ? '#E5484D' : undefined }}>{row.r2.toFixed(3)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <div style={{
+                    background: 'var(--warning-soft)', border: '1px solid #FDE68A', borderRadius: 'var(--radius-sm)',
+                    padding: '12px 14px', fontSize: '12px', color: '#92400E', marginBottom: '10px'
+                  }}>
+                    Inside the same mix of High, Medium, and Low films, the {heldOut.testCount}-film holdout still beats the category-mean baseline.
+                    When a whole budget tier is missing from training, R² collapses. The model does not extrapolate to a production scale it has not seen.
+                    That is the final-evaluation result, and it is why a new scale of film has to be inside the training mix before the estimate is used.
+                  </div>
+                  <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '12px', color: 'var(--text-faint)' }}>
+                    {heldOut.limitations.map((l) => <li key={l} style={{ marginBottom: '4px' }}>{l}</li>)}
                   </ul>
                 </div>
               )}
@@ -568,10 +674,13 @@ const Evaluation = ({ productionId }) => {
                 background: 'var(--violet-soft)', border: '1px solid #DDD6FE', borderRadius: 'var(--radius-sm)',
                 padding: '14px 18px', marginBottom: '20px', fontSize: '13px', color: '#5B21B6'
               }}>
-                <b>Why this exists:</b> Metric 1 above is computed from live production data, which changes every
-                session and isn't reproducible as a stated result. This panel re-runs the same deterministic
-                rule-based extractor (no LLM call) against a fixed, hand-labeled 2-scene screenplay corpus — the
-                numbers below are exactly reproducible on every run.
+                <b>Final corpus.</b> Mid-semester recall on a 2-scene, 16-entity set was 75% (precision 92%, F1 83%).
+                This panel re-runs the deterministic extractor, with no LLM call, on a fixed 12-scene corpus that keeps
+                those two scenes and adds ten more. The glossary is longer, transition slugs such as “THE FOLLOWING MORNING”
+                are rejected, capitalized role introductions are filed as cast, and other capitalized objects as props.
+                The misses that remain are part of the result: a sentence-case role with no cue, and lowercase objects
+                the glossary does not contain. The corpus and rules were written in the same pass, so this is a
+                development-set score, not a blind test.
               </div>
 
               {testSetLoading && !testSet && (
@@ -965,7 +1074,7 @@ const Evaluation = ({ productionId }) => {
           </div>
 
           {/* ══════════════════════════════════════════════════════════
-              SECTION 3 — BENCHMARK FILM COMPARISON (100-film dataset)
+              SECTION 3 — BENCHMARK FILM COMPARISON (200-film dataset)
           ══════════════════════════════════════════════════════════ */}
           {data.benchmarkFilms && data.benchmarkFilms.length > 0 && (() => {
             const catColorMap = {
@@ -987,7 +1096,7 @@ const Evaluation = ({ productionId }) => {
                   <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <BarChart2 size={16} color="var(--violet)" /> Metric 2b — Benchmark Film Validation
                   </h3>
-                  <span className="hint">{data.benchmarkFilmCount} Indian films · High / Medium / Low budget · Publicly reported data</span>
+                  <span className="hint">{data.benchmarkFilmCount} Indian films · error vs reported total budget</span>
                 </div>
                 <div className="panel-body">
 
@@ -997,10 +1106,13 @@ const Evaluation = ({ productionId }) => {
                     borderRadius: 'var(--radius-sm)', padding: '14px 18px', marginBottom: '24px',
                     fontSize: '13px', color: '#5B21B6'
                   }}>
-                    <b>Methodology:</b> For each of {data.benchmarkFilmCount} films, the rate-card system is applied to an equivalent entity set
-                    (characters, locations, props, costumes, equipment). MAPE = mean(|System Estimate − Reported Actual| / Reported Actual × 100)
-                    across departments. Budget figures are sourced from trade publications and production house press releases.
-                    Target: MAPE ≤ 20% across all budget categories.
+                    <b>What is actually being checked.</b> For each of {data.benchmarkFilmCount} films, MAPE is
+                    |bottom-up system total − publicly reported production budget| / reported budget.
+                    The reported total is the actual production record used as ground truth (trade press and box-office
+                    trackers; see the benchmark provenance note). Department columns in the table are researcher-estimated
+                    ratios, because studio ledgers are not public, and they are not the accuracy target.
+                    The mid-semester figure of about 9.7% compared the system with those estimated department splits.
+                    This panel does not. A result above the 20% target, or worse than the baseline, is shown as-is.
                   </div>
 
                   {/* Baseline-vs-system explainer */}
@@ -1055,16 +1167,17 @@ const Evaluation = ({ productionId }) => {
                       );
                     })}
                     <div style={{
-                      background: 'var(--success-soft)', border: '1px solid #6EE7B7',
+                      background: data.benchmarkOverallMape <= 20 ? 'var(--success-soft)' : 'var(--warning-soft)',
+                      border: `1px solid ${data.benchmarkOverallMape <= 20 ? '#6EE7B7' : '#FDE68A'}`,
                       borderRadius: 'var(--radius)', padding: '16px', display: 'flex', flexDirection: 'column',
                       justifyContent: 'center', alignItems: 'center', gap: '4px'
                     }}>
-                      <div style={{ fontSize: '11px', color: '#047857', fontWeight: 600, textTransform: 'uppercase' }}>Overall MAPE ({data.benchmarkFilmCount} films)</div>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 800, fontSize: '28px', color: '#0E9F6E' }}>
+                      <div style={{ fontSize: '11px', color: data.benchmarkOverallMape <= 20 ? '#047857' : '#92400E', fontWeight: 600, textTransform: 'uppercase' }}>Overall MAPE ({data.benchmarkFilmCount} films)</div>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 800, fontSize: '28px', color: data.benchmarkOverallMape <= 20 ? '#0E9F6E' : '#D9822B' }}>
                         {data.benchmarkOverallMape.toFixed(1)}%
                       </div>
-                      <div style={{ fontSize: '11px', color: '#047857' }}>
-                        Target: ≤ 20% {data.benchmarkOverallMape <= 20 ? '✅' : '⚠️'}
+                      <div style={{ fontSize: '11px', color: data.benchmarkOverallMape <= 20 ? '#047857' : '#92400E' }}>
+                        Against reported totals · target ≤ 20% {data.benchmarkOverallMape <= 20 ? '✅' : '⚠️'}
                       </div>
                       <div style={{ fontSize: '11px', color: 'var(--text-faint)', marginTop: '4px' }}>
                         Baseline: {data.benchmarkBaselineOverallMape.toFixed(1)}%
@@ -1200,6 +1313,93 @@ const Evaluation = ({ productionId }) => {
               </div>
             );
           })()}
+
+          {/* ══════════════════════════════════════════════════════════
+              SECTION 3b — PER-SCALE RATE-CARD CALIBRATION (final)
+          ══════════════════════════════════════════════════════════ */}
+          {calibration && (
+            <div className="panel" style={{ marginTop: '24px', display: activeTab === 'cost' ? 'block' : 'none' }}>
+              <div className="panel-head">
+                <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <TrendingUp size={16} color="var(--violet)" /> Metric 2c — Calibrated Cost Estimate on Unseen Films
+                </h3>
+                <span className="hint">Factors fitted on {calibration.trainCount} films · scored on {calibration.testCount} held out</span>
+              </div>
+              <div className="panel-body">
+                <div style={{
+                  background: 'var(--violet-soft)', border: '1px solid #DDD6FE', borderRadius: 'var(--radius-sm)',
+                  padding: '14px 18px', marginBottom: '20px', fontSize: '13px', color: '#5B21B6'
+                }}>
+                  {calibration.methodology}
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '20px' }}>
+                  {[
+                    ['Holdout · uncalibrated', calibration.holdout.rawMapePct, `n=${calibration.holdout.filmCount}`],
+                    ['Holdout · calibrated', calibration.holdout.calibratedMapePct, `baseline ${calibration.holdout.baselineMapePct.toFixed(1)}%`],
+                    ['5-fold CV · calibrated', calibration.crossValidation.calibratedMapePct, `baseline ${calibration.crossValidation.baselineMapePct.toFixed(1)}%`],
+                    ['Underestimated films', null, `${calibration.underestimatedRaw} → ${calibration.underestimatedCalibrated} of ${calibration.crossValidation.filmCount}`],
+                  ].map(([label, val, sub]) => (
+                    <div key={label} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '14px' }}>
+                      <div style={{ fontSize: '11px', color: 'var(--text-faint)', textTransform: 'uppercase', fontWeight: 600 }}>{label}</div>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 800, fontSize: '22px' }}>
+                        {val === null ? `${calibration.underestimatedCalibrated}` : `${val.toFixed(1)}%`}
+                      </div>
+                      <div style={{ fontSize: '11px', color: 'var(--text-faint)' }}>{sub}</div>
+                    </div>
+                  ))}
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '16px' }}>
+                  <div>
+                    <div style={{ fontSize: '12px', fontWeight: 700, marginBottom: '6px' }}>Method chosen by CV on the {calibration.trainCount} training films</div>
+                    <table className="table">
+                      <thead><tr><th>Method</th><th className="num">CV MAPE</th><th></th></tr></thead>
+                      <tbody>
+                        {calibration.selectionOnTrain.map((m) => (
+                          <tr key={m.method} style={m.method === calibration.selectedMethod ? { background: 'var(--success-soft)' } : undefined}>
+                            <td>{m.method}</td>
+                            <td className="num mono">{m.cvMapePct.toFixed(1)}%</td>
+                            <td>{m.method === calibration.selectedMethod ? 'Selected' : ''}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    <div style={{ fontSize: '12px', fontWeight: 700, margin: '14px 0 6px' }}>Fitted factors</div>
+                    <table className="table">
+                      <thead><tr><th>Scale</th><th className="num">Factor</th><th className="num">Training films</th></tr></thead>
+                      <tbody>
+                        {calibration.factors.map((f) => (
+                          <tr key={f.scale}><td>{f.scale}</td><td className="num mono">×{f.factor.toFixed(2)}</td><td className="num mono">{f.trainFilms}</td></tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '12px', fontWeight: 700, marginBottom: '6px' }}>Holdout MAPE by reported budget tier</div>
+                    <table className="table">
+                      <thead><tr><th>Tier</th><th className="num">Films</th><th className="num">Uncalibrated</th><th className="num">Calibrated</th><th className="num">Baseline</th></tr></thead>
+                      <tbody>
+                        {calibration.holdout.byCategory.map((c) => (
+                          <tr key={c.category}>
+                            <td>{c.category}</td>
+                            <td className="num mono">{c.filmCount}</td>
+                            <td className="num mono">{c.rawMapePct.toFixed(1)}%</td>
+                            <td className="num mono" style={{ color: c.calibratedMapePct < c.baselineMapePct ? '#0E9F6E' : '#E5484D', fontWeight: 700 }}>{c.calibratedMapePct.toFixed(1)}%</td>
+                            <td className="num mono">{c.baselineMapePct.toFixed(1)}%</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <ul style={{ fontSize: '12px', color: 'var(--text-faint)', paddingLeft: '18px', margin: 0 }}>
+                  {calibration.limitations.map((l) => <li key={l} style={{ marginBottom: '4px' }}>{l}</li>)}
+                </ul>
+              </div>
+            </div>
+          )}
         </>
       )}
     </div>

@@ -37,12 +37,7 @@ func EstimateCostForElement(element models.ProductionElement, scale string, curr
 	switch element.Type {
 	case "Character":
 		dept = "Cast"
-		cat = "Supporting" // default
-		if element.Mentions > 20 {
-			cat = "Lead"
-		} else if element.Mentions < 5 {
-			cat = "Background"
-		}
+		cat = castCategory(element)
 	case "Location":
 		dept = "Locations"
 		cat = "DayRate"
@@ -59,6 +54,7 @@ func EstimateCostForElement(element models.ProductionElement, scale string, curr
 		return 0, 0
 	}
 
+	_, qty := BillingUnit(element)
 	if rateCard, ok := GlobalRateCards[currency]; ok {
 		if scales, ok := rateCard.Rates.Departments[dept]; ok {
 			if categories, ok := scales[scale]; ok {
@@ -71,7 +67,7 @@ func EstimateCostForElement(element models.ProductionElement, scale string, curr
 						multiplier = 1
 					}
 					actualRate := rate * multiplier
-					return actualRate * element.EstimatedDays, actualRate
+					return actualRate * qty, actualRate
 				}
 			}
 		}
@@ -82,14 +78,44 @@ func EstimateCostForElement(element models.ProductionElement, scale string, curr
 	// default rather than silently costing ₹0, which would be a confusing,
 	// hard-to-diagnose failure in a live demo.
 	const fallbackRate = 5000.0
-	return fallbackRate * element.EstimatedDays, fallbackRate
+	return fallbackRate * qty, fallbackRate
+}
+
+func castCategory(element models.ProductionElement) string {
+	switch element.SubCategory {
+	case "Lead", "Supporting", "Background":
+		return element.SubCategory
+	}
+	switch {
+	case element.Mentions > 20:
+		return "Lead"
+	case element.Mentions < 5:
+		return "Background"
+	default:
+		return "Supporting"
+	}
+}
+
+// BillingUnit returns how an entity's rate-card entry is charged. Lead and
+// supporting cast rates are per-film fees and art rates are per item; the
+// rest (background cast, locations, equipment, crew) are per shoot day.
+func BillingUnit(element models.ProductionElement) (string, float64) {
+	switch element.Type {
+	case "Prop", "Costume":
+		return "per_item", 1
+	case "Character":
+		if c := castCategory(element); c == "Lead" || c == "Supporting" {
+			return "per_film", 1
+		}
+	}
+	return "per_day", element.EstimatedDays
 }
 
 // DeriveProductionScale buckets a production into Small/Medium/Large based
 // on its predicted shoot-day count (see services.PredictShootDays), so cost
 // estimation can pick the right rate-card tier without requiring the
 // producer to manually classify the production before a budget exists.
-// Thresholds are informed by the 100-film benchmark's budget-category shoot
+// Thresholds are informed by the benchmark's budget-category shoot
 // day ranges (see benchmark_films.csv) and are a documented heuristic, not
 // a separately validated model.
 func DeriveProductionScale(predictedShootDays float64) string {

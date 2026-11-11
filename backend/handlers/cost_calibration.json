@@ -1,0 +1,104 @@
+{
+  "methodology": "One multiplicative factor per production scale (Small / Medium / Large, from the predicted shoot days with the service's 60- and 150-day thresholds). Each factor is the weighted median of actual/estimate ratios, which minimises percentage error. The method was chosen by 5-fold CV on the 160 training films, fitted on all 160 and scored once on the same 40 held-out films as the shoot-day holdout. The baseline is the mean reported budget of the training films in the same reported tier.",
+  "seed": 7,
+  "trainCount": 160,
+  "testCount": 40,
+  "selectionOnTrain": [
+    {
+      "method": "Uncalibrated rate card",
+      "cvMapePct": 59.5
+    },
+    {
+      "method": "Per-scale factor",
+      "cvMapePct": 51.7
+    },
+    {
+      "method": "Per-scale power law",
+      "cvMapePct": 87.4
+    }
+  ],
+  "selectedMethod": "Per-scale factor",
+  "factors": [
+    {
+      "scale": "Small",
+      "factor": 2.174,
+      "trainFilms": 68
+    },
+    {
+      "scale": "Medium",
+      "factor": 1.667,
+      "trainFilms": 62
+    },
+    {
+      "scale": "Large",
+      "factor": 1.001,
+      "trainFilms": 30
+    }
+  ],
+  "holdout": {
+    "filmCount": 40,
+    "rawMapePct": 59.9,
+    "calibratedMapePct": 48.1,
+    "baselineMapePct": 51.1,
+    "byCategory": [
+      {
+        "category": "High",
+        "filmCount": 10,
+        "rawMapePct": 53.4,
+        "calibratedMapePct": 48.8,
+        "baselineMapePct": 51.2
+      },
+      {
+        "category": "Medium",
+        "filmCount": 18,
+        "rawMapePct": 63.6,
+        "calibratedMapePct": 39.4,
+        "baselineMapePct": 37.7
+      },
+      {
+        "category": "Low",
+        "filmCount": 12,
+        "rawMapePct": 59.9,
+        "calibratedMapePct": 60.6,
+        "baselineMapePct": 71.1
+      }
+    ]
+  },
+  "crossValidation": {
+    "filmCount": 200,
+    "rawMapePct": 59.6,
+    "calibratedMapePct": 51.9,
+    "baselineMapePct": 59.8,
+    "byCategory": [
+      {
+        "category": "High",
+        "filmCount": 50,
+        "rawMapePct": 48.2,
+        "calibratedMapePct": 46.7,
+        "baselineMapePct": 50.5
+      },
+      {
+        "category": "Medium",
+        "filmCount": 90,
+        "rawMapePct": 63.6,
+        "calibratedMapePct": 50.3,
+        "baselineMapePct": 52.9
+      },
+      {
+        "category": "Low",
+        "filmCount": 60,
+        "rawMapePct": 63.0,
+        "calibratedMapePct": 58.6,
+        "baselineMapePct": 77.9
+      }
+    ]
+  },
+  "underestimatedRaw": 180,
+  "underestimatedCalibrated": 151,
+  "limitations": [
+    "The factors correct the film-level benchmark costing. The scene-level engine behind the Budget Engine page is not calibrated, because it has not been scored against reported budgets.",
+    "The baseline is given the reported budget tier, which the live system does not know, so the comparison is generous to the baseline.",
+    "Error stays near 50%: films with similar entity counts and schedules have very different reported budgets, mostly because of star fees, which no script-derived count captures."
+  ],
+  "reproduceCommand": "python3 scripts/cost_calibration.py"
+}

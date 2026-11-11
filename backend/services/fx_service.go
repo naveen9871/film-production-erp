@@ -17,7 +17,7 @@ func GetRate(db *gorm.DB, from string, to string, date time.Time) (float64, erro
 	var rate models.FXRate
 	if err := db.Where("base_currency = ? AND to_currency = ? AND effective_date <= ?", from, to, date).
 		Order("effective_date desc").First(&rate).Error; err != nil {
-		
+
 		// Try reverse mapping (To -> From) and invert rate
 		var revRate models.FXRate
 		if err2 := db.Where("base_currency = ? AND to_currency = ? AND effective_date <= ?", to, from, date).

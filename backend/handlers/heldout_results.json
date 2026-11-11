@@ -1,0 +1,394 @@
+{
+  "methodology": "Stratified 80/20 split by budget category, seed 7 (10 High, 18 Medium, 12 Low held out of 200 films). Four model families were cross-validated on the 160 training films only. The lowest training-CV MAE was refit on all 160 and scored once on the 40. The tier-shift rows train a fresh Random Forest on two budget tiers and score the third. This is not the deployed forest, which was fit on the original 100 films after mid-semester selection.",
+  "seed": 7,
+  "dataset": "benchmark_films.csv",
+  "trainCount": 160,
+  "testCount": 40,
+  "selectionOnTrain": [
+    {
+      "maeDays": 13.22,
+      "rmseDays": 18.06,
+      "mapePct": 22.7,
+      "r2": 0.865,
+      "model": "Linear Regression"
+    },
+    {
+      "maeDays": 14.69,
+      "rmseDays": 19.69,
+      "mapePct": 23.7,
+      "r2": 0.84,
+      "model": "Decision Tree"
+    },
+    {
+      "maeDays": 12.91,
+      "rmseDays": 17.89,
+      "mapePct": 20.6,
+      "r2": 0.868,
+      "model": "Random Forest"
+    },
+    {
+      "maeDays": 13.33,
+      "rmseDays": 17.99,
+      "mapePct": 21.0,
+      "r2": 0.867,
+      "model": "Gradient Boosting"
+    }
+  ],
+  "selectedModel": "Random Forest",
+  "holdout": {
+    "maeDays": 8.19,
+    "rmseDays": 10.84,
+    "mapePct": 13.9,
+    "r2": 0.949
+  },
+  "baseline": {
+    "maeDays": 12.81,
+    "rmseDays": 16.03,
+    "mapePct": 21.5,
+    "r2": 0.888
+  },
+  "improvementMaePct": 36.1,
+  "byCategory": [
+    {
+      "maeDays": 10.12,
+      "rmseDays": 11.74,
+      "mapePct": 6.6,
+      "r2": 0.594,
+      "category": "High",
+      "filmCount": 10
+    },
+    {
+      "maeDays": 8.36,
+      "rmseDays": 11.85,
+      "mapePct": 14.6,
+      "r2": 0.221,
+      "category": "Medium",
+      "filmCount": 18
+    },
+    {
+      "maeDays": 6.32,
+      "rmseDays": 8.13,
+      "mapePct": 19.1,
+      "r2": 0.753,
+      "category": "Low",
+      "filmCount": 12
+    }
+  ],
+  "films": [
+    {
+      "title": "83",
+      "category": "High",
+      "actualDays": 125.0,
+      "predictedDays": 134.9,
+      "absErrorDays": 9.9
+    },
+    {
+      "title": "Adipurush",
+      "category": "High",
+      "actualDays": 180.0,
+      "predictedDays": 183.8,
+      "absErrorDays": 3.8
+    },
+    {
+      "title": "Bang Bang!",
+      "category": "High",
+      "actualDays": 140.0,
+      "predictedDays": 137.2,
+      "absErrorDays": 2.8
+    },
+    {
+      "title": "Enthiran/Robot",
+      "category": "High",
+      "actualDays": 170.0,
+      "predictedDays": 181.0,
+      "absErrorDays": 11.0
+    },
+    {
+      "title": "Ponniyin Selvan: II",
+      "category": "High",
+      "actualDays": 180.0,
+      "predictedDays": 162.2,
+      "absErrorDays": 17.8
+    },
+    {
+      "title": "Salaar: Part 1",
+      "category": "High",
+      "actualDays": 170.0,
+      "predictedDays": 163.5,
+      "absErrorDays": 6.5
+    },
+    {
+      "title": "Shivaay",
+      "category": "High",
+      "actualDays": 140.0,
+      "predictedDays": 154.7,
+      "absErrorDays": 14.7
+    },
+    {
+      "title": "Thugs of Hindostan",
+      "category": "High",
+      "actualDays": 160.0,
+      "predictedDays": 142.1,
+      "absErrorDays": 17.9
+    },
+    {
+      "title": "Vikram",
+      "category": "High",
+      "actualDays": 145.0,
+      "predictedDays": 143.8,
+      "absErrorDays": 1.2
+    },
+    {
+      "title": "Zero",
+      "category": "High",
+      "actualDays": 140.0,
+      "predictedDays": 124.6,
+      "absErrorDays": 15.4
+    },
+    {
+      "title": "777 Charlie",
+      "category": "Medium",
+      "actualDays": 85.0,
+      "predictedDays": 77.4,
+      "absErrorDays": 7.6
+    },
+    {
+      "title": "Amaran",
+      "category": "Medium",
+      "actualDays": 70.0,
+      "predictedDays": 69.5,
+      "absErrorDays": 0.5
+    },
+    {
+      "title": "Badrinath Ki Dulhania",
+      "category": "Medium",
+      "actualDays": 65.0,
+      "predictedDays": 64.0,
+      "absErrorDays": 1.0
+    },
+    {
+      "title": "Chandigarh Kare Aashiqui",
+      "category": "Medium",
+      "actualDays": 40.0,
+      "predictedDays": 60.3,
+      "absErrorDays": 20.3
+    },
+    {
+      "title": "Chhichhore",
+      "category": "Medium",
+      "actualDays": 55.0,
+      "predictedDays": 61.4,
+      "absErrorDays": 6.4
+    },
+    {
+      "title": "Dabangg 3",
+      "category": "Medium",
+      "actualDays": 65.0,
+      "predictedDays": 64.4,
+      "absErrorDays": 0.6
+    },
+    {
+      "title": "Dil Dhadakne Do",
+      "category": "Medium",
+      "actualDays": 90.0,
+      "predictedDays": 77.6,
+      "absErrorDays": 12.4
+    },
+    {
+      "title": "English Vinglish",
+      "category": "Medium",
+      "actualDays": 60.0,
+      "predictedDays": 64.2,
+      "absErrorDays": 4.2
+    },
+    {
+      "title": "Jai Bhim",
+      "category": "Medium",
+      "actualDays": 65.0,
+      "predictedDays": 62.1,
+      "absErrorDays": 2.9
+    },
+    {
+      "title": "Lucky Baskhar",
+      "category": "Medium",
+      "actualDays": 50.0,
+      "predictedDays": 71.8,
+      "absErrorDays": 21.8
+    },
+    {
+      "title": "Mission Mangal",
+      "category": "Medium",
+      "actualDays": 80.0,
+      "predictedDays": 65.9,
+      "absErrorDays": 14.1
+    },
+    {
+      "title": "Pink",
+      "category": "Medium",
+      "actualDays": 40.0,
+      "predictedDays": 59.5,
+      "absErrorDays": 19.5
+    },
+    {
+      "title": "Rang De",
+      "category": "Medium",
+      "actualDays": 65.0,
+      "predictedDays": 62.4,
+      "absErrorDays": 2.6
+    },
+    {
+      "title": "Rustom",
+      "category": "Medium",
+      "actualDays": 65.0,
+      "predictedDays": 64.1,
+      "absErrorDays": 0.9
+    },
+    {
+      "title": "Stree",
+      "category": "Medium",
+      "actualDays": 60.0,
+      "predictedDays": 60.1,
+      "absErrorDays": 0.1
+    },
+    {
+      "title": "Stree 2",
+      "category": "Medium",
+      "actualDays": 55.0,
+      "predictedDays": 52.3,
+      "absErrorDays": 2.7
+    },
+    {
+      "title": "Talaash",
+      "category": "Medium",
+      "actualDays": 70.0,
+      "predictedDays": 64.1,
+      "absErrorDays": 5.9
+    },
+    {
+      "title": "Zindagi Na Milegi Dobara",
+      "category": "Medium",
+      "actualDays": 80.0,
+      "predictedDays": 53.0,
+      "absErrorDays": 27.0
+    },
+    {
+      "title": "Aattam",
+      "category": "Low",
+      "actualDays": 18.0,
+      "predictedDays": 27.7,
+      "absErrorDays": 9.7
+    },
+    {
+      "title": "Gangs of Wasseypur",
+      "category": "Low",
+      "actualDays": 80.0,
+      "predictedDays": 63.8,
+      "absErrorDays": 16.2
+    },
+    {
+      "title": "Joji",
+      "category": "Low",
+      "actualDays": 30.0,
+      "predictedDays": 27.7,
+      "absErrorDays": 2.3
+    },
+    {
+      "title": "Minnal Murali",
+      "category": "Low",
+      "actualDays": 50.0,
+      "predictedDays": 55.4,
+      "absErrorDays": 5.4
+    },
+    {
+      "title": "Mukkabaaz",
+      "category": "Low",
+      "actualDays": 40.0,
+      "predictedDays": 36.7,
+      "absErrorDays": 3.3
+    },
+    {
+      "title": "Mukti Bhawan",
+      "category": "Low",
+      "actualDays": 20.0,
+      "predictedDays": 28.5,
+      "absErrorDays": 8.5
+    },
+    {
+      "title": "Paan Singh Tomar",
+      "category": "Low",
+      "actualDays": 45.0,
+      "predictedDays": 42.2,
+      "absErrorDays": 2.8
+    },
+    {
+      "title": "Premam",
+      "category": "Low",
+      "actualDays": 45.0,
+      "predictedDays": 46.2,
+      "absErrorDays": 1.2
+    },
+    {
+      "title": "Super Deluxe",
+      "category": "Low",
+      "actualDays": 45.0,
+      "predictedDays": 29.0,
+      "absErrorDays": 16.0
+    },
+    {
+      "title": "The Great Indian Kitchen",
+      "category": "Low",
+      "actualDays": 22.0,
+      "predictedDays": 28.5,
+      "absErrorDays": 6.5
+    },
+    {
+      "title": "The Lunchbox",
+      "category": "Low",
+      "actualDays": 28.0,
+      "predictedDays": 28.8,
+      "absErrorDays": 0.8
+    },
+    {
+      "title": "Tumhari Sulu",
+      "category": "Low",
+      "actualDays": 35.0,
+      "predictedDays": 31.9,
+      "absErrorDays": 3.1
+    }
+  ],
+  "tierShift": [
+    {
+      "maeDays": 52.73,
+      "rmseDays": 58.5,
+      "mapePct": 32.6,
+      "r2": -4.084,
+      "trainOn": "Medium+Low",
+      "testOn": "High",
+      "testCount": 50
+    },
+    {
+      "maeDays": 13.3,
+      "rmseDays": 16.39,
+      "mapePct": 21.7,
+      "r2": 0.228,
+      "trainOn": "High+Low",
+      "testOn": "Medium",
+      "testCount": 90
+    },
+    {
+      "maeDays": 21.01,
+      "rmseDays": 22.86,
+      "mapePct": 77.7,
+      "r2": -2.936,
+      "trainOn": "High+Medium",
+      "testOn": "Low",
+      "testCount": 60
+    }
+  ],
+  "limitations": [
+    "Entity counts in this benchmark are researcher-estimated from production scale, not counted by the extractor from full screenplays. The holdout therefore tests unseen films inside this table, not scripts the system has never been shown.",
+    "Reported shoot days mix press-reported figures and schedule estimates. See BENCHMARK_PROVENANCE.md.",
+    "A 40-film holdout still has a wide error bar. The tier-shift test is the stricter check, because a whole budget tier is absent from training."
+  ],
+  "reproduceCommand": "python3 scripts/heldout_generalization.py"
+}

@@ -34,7 +34,7 @@ func AddFXRate(db *gorm.DB) gin.HandlerFunc {
 		orgID, _ := c.Get("orgID")
 		input.OrganizationID = uint(orgID.(float64))
 		input.Source = "manual"
-		
+
 		if err := db.Create(&input).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return

@@ -59,7 +59,7 @@ func UpdateShootDayStatus(db *gorm.DB) gin.HandlerFunc {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Shoot day not found"})
 			return
 		}
-		
+
 		orgID, _ := c.Get("orgID")
 		var prod models.Production
 		if err := db.First(&prod, day.ProductionID).Error; err != nil || prod.OrganizationID != uint(orgID.(float64)) {
@@ -82,7 +82,7 @@ func UpdateShootDayStatus(db *gorm.DB) gin.HandlerFunc {
 func GetDOOD(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		productionID := c.Param("productionId")
-		
+
 		// Note: A real DOOD report requires joining entities and grouping by day
 		// For now, we return the raw schedule data sorted by element
 		var days []models.ShootDay

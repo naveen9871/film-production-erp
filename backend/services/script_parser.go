@@ -19,6 +19,11 @@ func ParseScript(productionID uint, rawText string) []models.Scene {
 	for _, line := range lines {
 		trimmed := strings.TrimSpace(line)
 		if trimmed == "" {
+			// Blank lines separate dialogue from action. The extractor
+			// needs them to find character cues.
+			if currentScene != nil {
+				sceneContent.WriteString("\n")
+			}
 			continue
 		}
 

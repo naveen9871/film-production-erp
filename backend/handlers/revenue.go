@@ -16,7 +16,7 @@ func AddDistributor(db *gorm.DB) gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-		
+
 		orgID, _ := c.Get("orgID")
 		input.OrganizationID = uint(orgID.(float64))
 
@@ -71,7 +71,7 @@ func LogRevenue(db *gorm.DB) gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-		
+
 		if err := db.Create(&input).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return

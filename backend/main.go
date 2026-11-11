@@ -287,6 +287,7 @@ func setupRouter() *gin.Engine {
 		protected.POST("/scripts/:productionId/analyze", handlers.UploadScript(DB)) // Re-using UploadScript for now
 		protected.GET("/scripts/:productionId/entities", handlers.GetExtractedElements(DB))
 		protected.POST("/productions/:productionId/recalculate", handlers.RecalculatePrediction(DB))
+		protected.GET("/productions/:productionId/explainability", handlers.GetScriptExplainability(DB))
 		protected.GET("/projects/:productionId/entities", handlers.GetEntitiesByType(DB))
 		protected.PUT("/entities/:id", handlers.UpdateEntity(DB))
 
@@ -349,6 +350,10 @@ func setupRouter() *gin.Engine {
 		protected.GET("/validation/extraction-test-set", handlers.GetExtractionTestSet())
 		// Shoot-day prediction model — cross-validated accuracy (core AI/ML contribution)
 		protected.GET("/validation/shoot-day-model", handlers.GetShootDayModelMetrics())
+		// Final: stratified holdout and budget-tier shift (unseen films)
+		protected.GET("/validation/held-out", handlers.GetHeldOutEvaluation())
+		// Final: per-scale rate-card calibration scored on the same holdout
+		protected.GET("/validation/cost-calibration", handlers.GetCostCalibration())
 		// Ad-hoc prediction against the deployed model (Evaluation Dashboard "try it" calculator)
 		protected.GET("/validation/predict-shoot-days", handlers.PredictShootDaysAdHoc())
 		// Ablation study: with vs without fuzzy-string deduplication
@@ -421,8 +426,12 @@ func main() {
 
 	r := setupRouter()
 
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
 	srv := &http.Server{
-		Addr:    ":8080",
+		Addr:    ":" + port,
 		Handler: r,
 	}
 

@@ -120,6 +120,8 @@ export const fetchEntityAuditLog = (entityType, entityId) => api.get(`/audit/${e
 
 // Re-run shoot-day prediction + budget generation from current (edited) entities
 export const recalculatePrediction = (id) => api.post(`/productions/${id}/recalculate`);
+// Scene-level explainability breakdown (reconciled against Random Forest shoot days)
+export const fetchScriptExplainability = (id) => api.get(`/productions/${id}/explainability`);
 
 // Evaluation Metrics (Precision/Recall/F1 + MAPE)
 export const fetchEvaluationMetrics = (id) => api.get(`/productions/${id}/evaluate`);
@@ -127,6 +129,10 @@ export const fetchEvaluationMetrics = (id) => api.get(`/productions/${id}/evalua
 export const fetchExtractionTestSet = () => api.get('/validation/extraction-test-set');
 // Shoot-day prediction model — cross-validated accuracy (core AI/ML contribution)
 export const fetchShootDayModel = () => api.get('/validation/shoot-day-model');
+// Final evaluation: 40-film holdout and budget-tier shift
+export const fetchHeldOutEvaluation = () => api.get('/validation/held-out');
+// Final evaluation: per-scale rate-card calibration on the same holdout
+export const fetchCostCalibration = () => api.get('/validation/cost-calibration');
 // Ad-hoc prediction against the deployed model (Evaluation Dashboard "try it" calculator)
 export const predictShootDaysAdHoc = (params) => api.get('/validation/predict-shoot-days', { params });
 

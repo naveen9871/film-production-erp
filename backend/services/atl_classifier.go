@@ -23,7 +23,7 @@ func ClassifyBudgetLine(element models.ProductionElement, item *models.BudgetIte
 
 	// Below the line mapping
 	item.BudgetLine = "BTL_production"
-	
+
 	switch element.Type {
 	case "Location":
 		item.Department = "Locations"

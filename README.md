@@ -150,7 +150,7 @@ The live **Evaluation Dashboard** (accessible at `/evaluation` in the app) autom
 
 ### Metric 2 — Cost-Estimation Error
 
-The generated budget quote is evaluated against a **100-film benchmark dataset** (`benchmark_films.csv`) spanning 25 High-budget (₹100 Cr+), 45 Medium-budget (₹20–100 Cr), and 30 Low-budget (< ₹20 Cr) Indian feature films, each with publicly reported department-level actuals and rate-card system estimates. The primary error metric is **Mean Absolute Percentage Error (MAPE)**:
+The generated budget quote is evaluated against a **200-film benchmark dataset** (`benchmark_films.csv`) spanning 50 High-budget (₹100 Cr+), 90 Medium-budget (₹20–100 Cr), and 60 Low-budget (< ₹20 Cr) Indian feature films. Totals are rounded trade-reported budgets. Department splits are researcher-estimated. The error metric is **Mean Absolute Percentage Error (MAPE)** against the reported total: The primary error metric is **Mean Absolute Percentage Error (MAPE)**:
 
 ```
 MAPE = (1/n) × Σ | (Estimated_i − Benchmark_i) / Benchmark_i | × 100%

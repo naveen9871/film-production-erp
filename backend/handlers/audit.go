@@ -27,7 +27,7 @@ func GetEntityAuditLog(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		entityType := c.Param("entityType")
 		entityID := c.Param("entityId")
-		
+
 		var logs []models.AuditLog
 		if err := db.Where("entity_type = ? AND entity_id = ?", entityType, entityID).Order("created_at desc").Find(&logs).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

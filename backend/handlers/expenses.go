@@ -70,4 +70,3 @@ func GetExpenses(db *gorm.DB) gin.HandlerFunc {
 		c.JSON(http.StatusOK, expenses)
 	}
 }
-

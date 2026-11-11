@@ -30,7 +30,7 @@ func CreatePO(db *gorm.DB, productionID, budgetItemID, vendorID, raisedByID uint
 	if err := db.Create(&po).Error; err != nil {
 		return nil, err
 	}
-	
+
 	// Log audit
 	LogAudit(db, raisedByID, "CREATE", "PurchaseOrder", po.ID, nil, po, "")
 	return &po, nil

@@ -110,17 +110,27 @@ func UploadScript(db *gorm.DB) gin.HandlerFunc {
 		// 7. Run entity extraction (AI Orchestrator / regex fallback)
 		elements := services.ExtractEntities(uint(prodID), scenes)
 
+		// 8. Predict total shoot days from extracted entity counts
+		numChars, numLocs, numProps, numCostumes, numEquip := services.CountElementsByType(elements)
+		predictedDays := services.PredictShootDays(numChars, numLocs, numProps, numCostumes, numEquip)
+		db.Model(&models.Production{}).Where("id = ?", prodID).Update("predicted_shoot_days", predictedDays)
+
+		// Store the same scene-based days and cast grades the budget uses
+		if entityDays := services.EntityShootDays(scenes, elements, predictedDays); entityDays != nil {
+			for i := range elements {
+				elements[i].EstimatedDays = entityDays[i]
+				if elements[i].Type == "Character" {
+					elements[i].SubCategory = services.CastGrade(entityDays[i], predictedDays)
+				}
+			}
+		}
+
 		// Save elements
 		for i := range elements {
 			elements[i].ProductionID = uint(prodID)
 			elements[i].ScriptVersionID = newVersion.ID
 			db.Create(&elements[i])
 		}
-
-		// 8. Predict total shoot days from extracted entity counts
-		numChars, numLocs, numProps, numCostumes, numEquip := services.CountElementsByType(elements)
-		predictedDays := services.PredictShootDays(numChars, numLocs, numProps, numCostumes, numEquip)
-		db.Model(&models.Production{}).Where("id = ?", prodID).Update("predicted_shoot_days", predictedDays)
 
 		var diff *models.ScriptDiff
 		if lastVersion.ID != 0 {
@@ -199,5 +209,28 @@ func RecalculatePrediction(db *gorm.DB) gin.HandlerFunc {
 			"predictedShootDays": predictedDays,
 			"budgetItems":        len(budgetItems),
 		})
+	}
+}
+
+// GetScriptExplainability returns the scene-level explainability breakdown,
+// estimating shooting hours and complexity drivers per scene, reconciled against
+// the film-level Random Forest shoot-day prediction.
+func GetScriptExplainability(db *gorm.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		prodID := c.Param("productionId")
+		var prod models.Production
+		if err := db.First(&prod, prodID).Error; err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Production not found"})
+			return
+		}
+
+		var scenes []models.Scene
+		db.Where("production_id = ?", prodID).Order("id asc").Find(&scenes)
+
+		var elements []models.ProductionElement
+		db.Where("production_id = ?", prodID).Find(&elements)
+
+		result := services.AnalyzeScriptExplainability(prod.ID, scenes, elements, prod.PredictedShootDays)
+		c.JSON(http.StatusOK, result)
 	}
 }

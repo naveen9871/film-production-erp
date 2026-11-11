@@ -22,8 +22,8 @@ type Client struct {
 
 // SSEBroker manages connected clients and broadcasts events
 type SSEBroker struct {
-	mu          sync.RWMutex
-	clients     map[uint]map[*Client]bool // Mapped by ProductionID
+	mu      sync.RWMutex
+	clients map[uint]map[*Client]bool // Mapped by ProductionID
 }
 
 var GlobalBroker *SSEBroker
